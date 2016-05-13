@@ -17,5 +17,7 @@ Quantity = namedtuple("Quantity", 'value comparator unit uri code')
 Condition = namedtuple("Condition", 'code outcome note')
 Annotation = namedtuple("Annotation", 'author time text')
 vaccinationProtocol = namedtuple("vaccinationProtocol" 'doseSequence description authority series seriesDoses targetDisease doseStatus doseStatusReason')
+practitionerRole = namedtuple("practitionerRole" 'managingOrganization role specialty period location healthcareService')
+qualification = namedtuple("qualification" 'identifer code period issuer')
 
 __all__ = ['Identifier', 'Coding', 'CodeableConcept', 'HumanName', 'Period', 'ContactPoint', 'Attachment', 'Language', 'Address', 'Reference', 'ReferenceRange', 'Quantity', 'Condition', 'Annotation', 'vaccinationProtocol']

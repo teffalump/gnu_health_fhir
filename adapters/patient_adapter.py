@@ -76,7 +76,6 @@ class patientAdapter:
 
         return telecom
 
-
     @property
     def gender(self):
         """Retrieve patient's administrative gender
@@ -183,9 +182,6 @@ class patientAdapter:
         """
 
         return 'true' if self.patient.name.active else 'false'
-
-    def __set_gnu_contact(self):
-        pass
 
     @property
     def careProvider(self):

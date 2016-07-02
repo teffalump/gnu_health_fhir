@@ -1,4 +1,5 @@
-from types import Identifier, CodeableConcept, Coding, HumanName, Period, ContactPoint
+from type_definitions import Identifier, CodeableConcept, Coding, HumanName, Period, ContactPoint, Address, communication
+from utils import safe_attrgetter
 
 class patientAdapter:
 
@@ -23,7 +24,7 @@ class patientAdapter:
 
             idents.append(i)
 
-        for alt in self.patient.alternative_ids:
+        for alt in self.patient.name.alternative_ids:
             i = Identifier()
             i.use = 'official'
             i.value = alt.code or '<UNKNOWN>'
@@ -209,19 +210,21 @@ class patientAdapter:
     def communication(self):
         """Retrieve patient language preferences
 
-        Returns: List of namedtuples (Language) although only one supported
+        Returns: List of namedtuples (communication) although only one supported
         """
 
         lang = self.patient.name.lang
         if lang:
-            l = Language(preferred='true')
+            cc = CodeableConcept()
             c = Coding()
             from re import sub
             c.code = sub('_','-', lang.code) #Standard requires dashes
             c.display = lang.name
             c.system = 'urn:ietf:bcp:47'
-            l.coding = [c]
-            return [l]
+            cc.coding = [c]
+            com = communication(preferred='true',
+                                language=cc)
+            return [com]
 
     @property
     def photo(self):
@@ -247,14 +250,14 @@ class patientAdapter:
         Returns: namedtuple (CodeableConcept)
         """
 
-        from server.fhir.value_sets import maritalStatus as ms
+        from value_sets import maritalStatus as ms
         #Health has concubinage and separated, which aren't truly
         # matching FHIR defined statuses
         us = self.patient.name.marital_status.upper() #Codes are uppercase
         if us:
-            ms = CodeableConcept()
             fhir_status = [x for x in ms.contents\
                                     if x['code'] == us]
+            ms = CodeableConcept()
             if fhir_status:
                 code = fhir_status[0]['code']
                 display = fhir_status[0]['display']

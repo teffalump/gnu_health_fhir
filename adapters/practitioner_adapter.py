@@ -1,6 +1,7 @@
+from type_definitions import ContactPoint, HumanName, Identifier, CodeableConcept, Coding, Reference, Period, practitionerRole
 from operator import attrgetter
 
-class practitioner_adapter:
+class practitionerAdapter:
     def __init__(self, hp):
         self.hp = hp
 
@@ -65,7 +66,7 @@ class practitioner_adapter:
         if self.hp.puid:
             i = Identifier()
             i.use = 'usual'
-            i.value = self.patient.puid or '<UNKNOWN>'
+            i.value = self.hp.puid or '<UNKNOWN>'
             i.type = CodeableConcept()
             i.type.text = "PUID/MRN"
 
@@ -82,7 +83,7 @@ class practitioner_adapter:
         return idents
 
     @property
-    def gender(self, gender):
+    def gender(self):
         """Gender
 
         Returns: string (male | female | etc)
@@ -100,7 +101,7 @@ class practitioner_adapter:
         return 'unknown'
 
     @property
-    def communication(self, communication):
+    def communication(self):
         """Languages practitioner speaks
 
         Returns: List of namedtuple (CodeableConcept) -- only one supported

@@ -1,6 +1,6 @@
-from types import Reference, Identifier, CodeableConcept, Coding
+from type_definitions import Reference, Identifier, CodeableConcept, Coding
 
-class diagnostic_report_adapter:
+class diagnosticReportAdapter:
     """
     Class that manages the interface between FHIR Resource DiagnosticReport
     and GNU Health
@@ -37,18 +37,18 @@ class diagnostic_report_adapter:
         Returns: List of namedtuple (Identifier) - only one supported
         """
 
-        patient = self.report.patient
-        date = self.report.date_analysis
-        report = self.report.test
+        #TODO Return more information
 
-        idents = []
-        if report and patient and date:
-            label = '{1}: {2} on {3}'.format(report.name, patient.rec_name or '<unknown>', date.strftime('%Y/%m/%d'))
-            ident = Identifier(value=label,
+        #patient = self.report.patient
+        #date = self.report.date_analysis
+        #report = self.report.test
+
+        #if report and patient and date:
+            #label = '{0}: {1} on {2}'.format(report.name, patient.rec_name or '<unknown>', date.strftime('%Y-%m-%d'))
+
+        return Identifier(value=str(report.id),
                                 use='official')
-            idents.append(ident)
 
-        return idents
 
     @property
     def code(self):
@@ -61,7 +61,7 @@ class diagnostic_report_adapter:
 
         test = self.report.test
         if test:
-            cc = supermod.CodeableConcept()
+            cc = CodeableConcept()
             coding = Coding(display=test.name,
                                 code=test.code)
             cc.coding = [coding]

@@ -1,4 +1,6 @@
-class observation_adapter:
+from type_definitions import Identifier, CodeableConcept, Coding, Reference, Quantity, ReferenceRange
+
+class observationAdapter:
     """Interface between FHIR Observation resource and data models"""
 
     def __init__(self, observation):
@@ -88,7 +90,7 @@ class observation_adapter:
         """
 
         persons = []
-        performer = self.observation.pathologist
+        performer = self.observation.gnuhealth_lab_id.pathologist
         if performer:
             r = Reference(display=performer.name.rec_name,
                             reference='/'.join(['Practitioner', str(performer.id)]))
@@ -160,7 +162,7 @@ class observation_adapter:
             return q
 
     @property
-    def subject(self, subject):
+    def subject(self):
         """Subject of observation (usually patient)
 
         Returns: namedtuple (Reference)

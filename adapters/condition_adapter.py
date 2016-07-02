@@ -1,4 +1,6 @@
-class condition_adapter:
+from type_definitions import CodeableConcept, Coding, Reference
+
+class conditionAdapter:
     """Adapter for the condition resource"""
 
     def __init__(self, condition):
@@ -14,7 +16,7 @@ class condition_adapter:
         patient = self.condition.name
         if patient:
             r = Reference(display=patient.rec_name,
-                            reference=''.join(['Patient/', patient.id]))
+                            reference=''.join(['Patient/', str(patient.id)]))
             return r
 
     @property
@@ -27,11 +29,11 @@ class condition_adapter:
         asserter = self.condition.healthprof
         if asserter:
             r = Reference(display=asserter.rec_name,
-                            reference=''.join(['Practitioner/', asserter.id]))
+                            reference=''.join(['Practitioner/', str(asserter.id)]))
             return r
 
     @property
-    def dateRecorded(self, dateAsserted):
+    def dateRecorded(self):
         """When condition first recorded
 
         Returns: string
@@ -50,7 +52,7 @@ class condition_adapter:
         return self.condition.short_comment
 
     @property
-    def abatementDateTime(self, abatementDate):
+    def abatementDateTime(self):
         """When condition resolved
 
         Returns: string

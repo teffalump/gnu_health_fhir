@@ -1,6 +1,6 @@
-from types import Condition, CodeableConcept, Coding, Reference
+from type_definitions import Condition, CodeableConcept, Coding, Reference
 
-class family_member_history_adapter:
+class familyMemberHistoryAdapter:
     #TODO Add more info to family history data model on Health side
 
     def __init__(self, member):
@@ -64,7 +64,7 @@ class family_member_history_adapter:
         subject = self.member.patient
         if subject:
             r = Reference(display=subject.rec_name,
-                            referenc='/'.join(['Patient', subject.id]))
+                            reference='/'.join(['Patient', str(subject.id)]))
             return r
 
     @property
@@ -74,14 +74,14 @@ class family_member_history_adapter:
         Returns: namedtuple (CodeableConcept)
         """
 
-        from server.fhir.value_sets import familyMember
+        from value_sets import familyMember
         member = self.member
         if member:
             cc = CodeableConcept()
             coding = Coding()
 
-            t = {'s': 'sibling', 'm': 'maternal', 'f': 'paternal'}
-            k = ' '.join((t.get(member.xory, ''), member.relative))
+            t = {'m': 'maternal', 'f': 'paternal'} #ignore sibling code
+            k = ' '.join((t.get(member.xory, ''), member.relative)).strip()
             info = [d for d in familyMember.contents if d['display'] == k]
 
             if info:

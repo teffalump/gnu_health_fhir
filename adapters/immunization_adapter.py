@@ -1,4 +1,6 @@
-class immunization_adapter:
+from type_definitions import Identifier, Reference, Quantity, vaccinationProtocol, CodeableConcept, Coding, Annotation
+
+class immunizationAdapter:
     """Adapter for immunization resource"""
 
     def __init__(self, vaccination):
@@ -12,7 +14,8 @@ class immunization_adapter:
         """
 
         i = Identifier(use='official',
-                    value='-'.join([self.vaccination.rec_name, str(self.vaccination.id)]))
+                    value='-'.join([self.vaccination.vaccine.rec_name,
+                                    str(self.vaccination.id)]))
         return [i]
 
     @property
@@ -149,15 +152,15 @@ class immunization_adapter:
         """
 
         route = self.vaccination.admin_route
-        from server.fhir.value_sets import immunizationRoute
+        from value_sets import immunizationRoute
         if route:
             ir=[i for i in immunizationRoute.contents if i['code'] == route.upper()]
             if ir:
                 cc = CodeableConcept()
                 c = Coding()
-                coding.display = cc.text = ir[0]['display']
-                coding.code = ir[0]['code']
-                cc.coding=[coding]
+                c.display = cc.text = ir[0]['display']
+                c.code = ir[0]['code']
+                cc.coding=[c]
                 return cc
 
     @property
@@ -168,7 +171,7 @@ class immunization_adapter:
         """
 
         site = self.vaccination.admin_site
-        from server.fhir.value_sets import immunizationSite
+        from value_sets import immunizationSite
         if site:
             m=[i for i in immunizationSite.contents if i['code'] == site.upper()]
             if m:
@@ -191,7 +194,7 @@ class immunization_adapter:
         if type_:
             cc = CodeableConcept()
             coding = Coding()
-            coding.display = cc.text = type_.name.name
+            coding.display = cc.text = type_.rec_name
             if type_.name.code:
                 coding.code = type_.name.code
                 cc.coding=[coding]
@@ -222,12 +225,12 @@ class immunization_adapter:
         disease = self.vaccination.vaccine.active_component[:1] #Get name of vaccine
         description = self.vaccination.observations
 
-        if doseSequence:
+        if seq:
             vp = vaccinationProtocol(doseSequence=seq,
                                         description=description)
 
-            ref = Reference(display=authority.rec_name,
-                            reference='/'.join(['Institution', authority.id]))
+            ref = Reference(display=authority.name.rec_name,
+                            reference='/'.join(['Institution', str(authority.id)]))
 
             target = CodeableConcept(text=disease)
             coding = Coding(display=disease)
@@ -243,4 +246,4 @@ class immunization_adapter:
             vp.targetDisease = target
             vp.doseStatus = status
 
-        return [vp]
+            return [vp]

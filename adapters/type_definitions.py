@@ -20,5 +20,6 @@ communication = namedlist("communication", 'language preferred', default=None)
 vaccinationProtocol = namedlist("vaccinationProtocol", 'doseSequence description authority series seriesDoses targetDisease doseStatus doseStatusReason', default=None)
 practitionerRole = namedlist("practitionerRole", 'managingOrganization role specialty period location healthcareService', default=None)
 qualification = namedlist("qualification", 'identifer code period issuer', default=None)
+performer = namedlist("performer", 'actor role', default=None)
 
-__all__ = ['Identifier', 'Coding', 'CodeableConcept', 'HumanName', 'Period', 'ContactPoint', 'Attachment', 'Address', 'Reference', 'ReferenceRange', 'Quantity', 'Condition', 'Annotation', 'vaccinationProtocol', 'qualification', 'practitionerRole', 'communication']
+__all__ = ['Identifier', 'Coding', 'CodeableConcept', 'HumanName', 'Period', 'ContactPoint', 'Attachment', 'Address', 'Reference', 'ReferenceRange', 'Quantity', 'Condition', 'Annotation', 'vaccinationProtocol', 'qualification', 'practitionerRole', 'communication', 'performer']

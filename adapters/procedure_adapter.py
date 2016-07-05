@@ -160,7 +160,7 @@ class procedureAdapter:
             ref = Reference(display=m.team_member.name.rec_name,
                             reference='/'.join(['Practitioner', str(m.team_member.id)]))
             if m.role:
-                code, name = attrgetter('role.code', 'role.name')(m)
+                code, name = attrgetter('role.specialty.code', 'role.specialty.name')(m)
                 role = CodeableConcept(text=name,
                                         coding=[Coding(code=code,
                                                     display=name)])
@@ -278,4 +278,14 @@ class procedureAdapter:
         #TODO Use self.procedure.name.supplies
         # But need to write those endpoints
         pass 
+
+    @property
+    def focalDevice(self):
+        """Devices that are the focus of the procedure
+
+        Returns:
+            List of namedlist (focalDevice)
+        """
+
+        pass
 

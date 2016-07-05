@@ -79,7 +79,7 @@ class procedureAdapter:
         c = Coding(userSelected='false',
                     system='urn:oid:2.16.840.1.113883.6.4',
                     code=procedure.name) #ICD-10-PCS
-        cc.text = c.display = procedure.description
+        cc.text = c.display = procedure.description.capitalize()
 
         cc.coding=[c]
         return cc

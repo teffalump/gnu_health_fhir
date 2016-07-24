@@ -15,11 +15,18 @@ ReferenceRange = namedlist("ReferenceRange", 'low high meaning age text', defaul
 Quantity = namedlist("Quantity", 'value comparator unit uri code', default=None)
 Condition = namedlist("Condition", 'code outcome note', default=None)
 Annotation = namedlist("Annotation", 'author time text', default=None)
+Timing = namedlist("Timing", 'event repeat code', default=None)
+Ratio = namedlist("Ratio", 'numerator denominator', default=None)
 
 communication = namedlist("communication", 'language preferred', default=None)
 vaccinationProtocol = namedlist("vaccinationProtocol", 'doseSequence description authority series seriesDoses targetDisease doseStatus doseStatusReason', default=None)
 practitionerRole = namedlist("practitionerRole", 'managingOrganization role specialty period location healthcareService', default=None)
 qualification = namedlist("qualification", 'identifer code period issuer', default=None)
 performer = namedlist("performer", 'actor role', default=None)
+dosage = namedlist("dosage", 'text timing asNeededBoolean siteCodeableConcept route method quantityQuantity rateRatio maxDosePerPeriod', default=None)
 
-__all__ = ['Identifier', 'Coding', 'CodeableConcept', 'HumanName', 'Period', 'ContactPoint', 'Attachment', 'Address', 'Reference', 'ReferenceRange', 'Quantity', 'Condition', 'Annotation', 'vaccinationProtocol', 'qualification', 'practitionerRole', 'communication', 'performer']
+#count is invalid field name
+repeat = namedlist("repeat", 'boundsQuantity cnt duration durationMax durationUnits frequency frequencyMax period periodUnits when', default=None)
+
+
+__all__ = ['Identifier', 'Coding', 'CodeableConcept', 'HumanName', 'Period', 'ContactPoint', 'Attachment', 'Address', 'Reference', 'ReferenceRange', 'Quantity', 'Condition', 'Annotation', 'vaccinationProtocol', 'qualification', 'practitionerRole', 'communication', 'performer', 'dosage', 'Timing', 'repeat', 'Ratio']

@@ -247,3 +247,5 @@ class immunizationAdapter:
             vp.doseStatus = status
 
             return [vp]
+
+__all__ = ['immunizationAdapter']

@@ -139,3 +139,5 @@ class diagnosticReportAdapter:
         """
 
         return self.report.results or self.report.diagnosis
+
+__all__ = ['diagnosticReportAdapter']

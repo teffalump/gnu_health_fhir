@@ -110,3 +110,5 @@ class conditionAdapter:
                             display=code.name)
             cc.coding=[coding]
             return cc
+
+__all__ = ['conditionAdapter']

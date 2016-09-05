@@ -107,3 +107,5 @@ class familyMemberHistoryAdapter:
             code.coding = coding
             condition = Condition(code=code)
             return condition
+
+__all__ = ['familyMemberHistoryAdapter']

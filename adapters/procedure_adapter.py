@@ -289,3 +289,4 @@ class procedureAdapter:
 
         pass
 
+__all__ = ['procedureAdapter']

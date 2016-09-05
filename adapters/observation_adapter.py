@@ -195,3 +195,5 @@ class observationAdapter:
     @property
     def method(self):
         pass
+
+__all__ = ['observationAdapter']

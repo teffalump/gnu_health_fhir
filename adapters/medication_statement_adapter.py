@@ -227,3 +227,5 @@ class medicationStatementAdapter:
         med = self.med.medicament
         return Reference(display=med.active_component,
                             reference='/'.join(['Medication', str(med.id)]))
+
+__all__ = ['medicationStatementAdapter']

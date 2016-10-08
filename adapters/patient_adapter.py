@@ -273,3 +273,5 @@ class patientAdapter:
     def link(self):
         """Various other links to same person"""
         return None
+
+__all__ = ['patientAdapter']

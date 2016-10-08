@@ -1,5 +1,5 @@
 from type_definitions import Identifier, CodeableConcept, Coding, HumanName, Period, ContactPoint, Address, communication
-from utils import safe_attrgetter
+from utils import safe_attrgetter, TIME_FORMAT
 
 class patientAdapter:
 
@@ -112,10 +112,10 @@ class patientAdapter:
     def deceasedBoolean(self):
         """Is patient deceased
 
-        Returns: 'true' or 'false'
+        Returns: True or False
         """
 
-        return 'true' if self.patient.deceased else 'false'
+        return self.patient.deceased
 
     @property
     def deceasedDateTime(self):
@@ -127,7 +127,7 @@ class patientAdapter:
         #TODO Figure out timezone/proper formatting
 
         dod = self.patient.dod
-        return dod.strftime('%Y-%m-%d %H:%M:%S') if dod is not None else None
+        return dod.strftime(TIME_FORMAT) if dod is not None else None
 
     @property
     def address(self):
@@ -177,12 +177,12 @@ class patientAdapter:
 
     @property
     def active(self):
-        """Retrieve patient record status
+        """Active patient or not
 
-        Returns: 'true' or 'false'
+        Returns: True or False
         """
 
-        return 'true' if self.patient.name.active else 'false'
+        return self.patient.name.active
 
     @property
     def careProvider(self):

@@ -9,10 +9,10 @@ class practitionerAdapter:
     def active(self):
         """Active or not
 
-        Returns: string (true | false)
+        Returns: True or False
         """
 
-        return 'true' if self.hp.name.active else 'false'
+        return self.hp.name.active
 
     @property
     def telecom(self):
@@ -86,7 +86,7 @@ class practitionerAdapter:
     def gender(self):
         """Gender
 
-        Returns: string (male | female | etc)
+        Returns: string ( male | female | other | unknown )
         """
 
         g = self.hp.name.gender

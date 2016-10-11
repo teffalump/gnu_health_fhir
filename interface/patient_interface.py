@@ -1,7 +1,7 @@
 from fhirclient.models.patient import Patient as P, PatientCommunication as PC
 from fhirclient.models.codeableconcept import CodeableConcept as CC
 from fhirclient.models.identifier import Identifier as ID
-from fhirclient.models.attachment import Attachement as AT
+from fhirclient.models.attachment import Attachment as AT
 from fhirclient.models.coding import Coding as C
 from fhirclient.models.fhirreference import Patient as FH
 from fhirclient.models.address import Address as AD

@@ -26,7 +26,7 @@ class Patient:
         patient = P()
 
         # identifier
-        for ident in self.patient.identifier:
+        for ident in self.adapter.identifier:
             id_ = ID({'use': ident.use,
                 'value': ident.value,
                 'type': CC({'text': ident.type.text})})

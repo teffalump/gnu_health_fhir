@@ -42,7 +42,7 @@ class procedureAdapter:
             string ('in-progress' | 'aborted' | 'completed' | 'entered-in-error')
         """
 
-        state = self.procedure.name.state 
+        state = self.procedure.name.state
 
         if state == 'in_progress':
             return 'in-progress'
@@ -89,10 +89,10 @@ class procedureAdapter:
         """Whether performed or not
 
         Returns:
-            string ('false' | 'true')
+            True or False
         """
 
-        return 'false' #There is no Health equivalent (I think?)
+        return False #There is no Health equivalent (I think?)
 
     @property
     def reasonNotePerformed(self):

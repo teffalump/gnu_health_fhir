@@ -1,4 +1,5 @@
 from type_definitions import CodeableConcept, Coding, Reference
+from utils import TIME_FORMAT
 
 class conditionAdapter:
     """Adapter for the condition resource"""
@@ -58,9 +59,8 @@ class conditionAdapter:
         Returns: string
         """
 
-        #TODO Time formatting
         date = self.condition.healed_date
-        return date.strftime('%Y-%m-%d %H:%M:%S') if date is not None else None
+        return date.strftime(TIME_FORMAT) if date is not None else None
 
     @property
     def verificationStatus(self):

@@ -89,3 +89,5 @@ class Procedure:
     @property
     def fhir_json(self):
         return self.procedure.as_json()
+
+__all__ = ['Procedure']

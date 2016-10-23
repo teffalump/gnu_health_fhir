@@ -81,3 +81,5 @@ class Practitioner:
     @property
     def fhir_json(self):
         self.practitioner.as_json()
+
+__all__ = ['Practitioner']

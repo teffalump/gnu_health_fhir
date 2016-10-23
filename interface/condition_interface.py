@@ -55,3 +55,5 @@ class Condition:
         @property
         def fhir_json(self):
             return self.condition.as_json()
+
+__all__ = ['Condition']

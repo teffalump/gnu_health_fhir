@@ -113,3 +113,5 @@ class Patient:
     @property
     def fhir_json(self):
         return self.patient.as_json()
+
+__all__ = ['Patient']

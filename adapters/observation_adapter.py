@@ -1,4 +1,5 @@
 from type_definitions import Identifier, CodeableConcept, Coding, Reference, Quantity, ReferenceRange
+from utils import TIME_FORMAT
 
 class observationAdapter:
     """Interface between FHIR Observation resource and data models"""
@@ -23,7 +24,7 @@ class observationAdapter:
         """
 
         i = Identifier(use='official',
-                    value='-'.join([self.observation.name, str(self.observation.id)]))
+                value='-'.join([self.observation.name, str(self.observation.id)]))
         return [i]
 
     @property
@@ -54,8 +55,8 @@ class observationAdapter:
                 d = 'Normal'
             coding.system = 'http://hl7.org/fhir/v2/0078'
             coding.code = v
-            coding.display = d
-            cc.coding = coding
+            coding.display = cc.text = d
+            cc.coding = [coding]
             return cc
 
     @property
@@ -66,7 +67,7 @@ class observationAdapter:
         """
 
         issued = self.observation.write_date or self.observation.create_date
-        return issued.strftime("%Y-%m-%dT%H:%M:%S") if issued is not None else None
+        return issued.strftime(TIME_FORMAT) if issued is not None else None
 
     @property
     def code(self):
@@ -182,7 +183,7 @@ class observationAdapter:
         """
 
         t = self.observation.gnuhealth_lab_id.date_analysis
-        return t.strftime("%Y-%m-%dT%H:%M:%S") if t is not None else None
+        return t.strftime(TIME_FORMAT) if t is not None else None
 
     @property
     def specimen(self):

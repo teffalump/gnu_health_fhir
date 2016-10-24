@@ -3,7 +3,7 @@ from fhirclient.models.codeableconcept import CodeableConcept as CC
 from fhirclient.models.identifier import Identifier as ID
 from fhirclient.models.attachment import Attachment as AT
 from fhirclient.models.coding import Coding as C
-from fhirclient.models.fhirreference import Patient as FH
+from fhirclient.models.fhirreference import Patient as FR
 from fhirclient.models.address import Address as AD
 from fhirclient.models.fhirdate import FHIRDate as FD
 from fhirclient.models.contactpoint import ContactPoint as CP

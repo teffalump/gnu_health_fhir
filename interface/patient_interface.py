@@ -9,18 +9,15 @@ from fhirclient.models.fhirdate import FHIRDate as FD
 from fhirclient.models.contactpoint import ContactPoint as CP
 from fhirclient.models.humanname import HumanName as HN
 from fhirclient.models.period import Period as Per
+from .common import Resource
 
-class Patient:
+class Patient(Resource):
     """Takes a patient adapter instance and provides valid FHIR data.
 
         Basically a wrapper for the adapter using the fhirclient models.
 
            E.g., p = Patient(adapter) --> p.fhir_json #valid FHIR json
     """
-
-    def __init__(self, adapter):
-        self.adapter = adapter
-        self._import_data()
 
     def _import_data(self):
         patient = P()
@@ -108,10 +105,6 @@ class Patient:
                     'display': self.adapter.maritalStatus.coding.display
                     })})
 
-        self.patient = patient
-
-    @property
-    def fhir_json(self):
-        return self.patient.as_json()
+        self.resource = patient
 
 __all__ = ['Patient']

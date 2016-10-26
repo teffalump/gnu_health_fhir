@@ -7,18 +7,15 @@ from fhirclient.models.fhirdate import FHIRDate as FD
 from fhirclient.models.codeableconcept import CodeableConcept as CC
 from fhirclient.models.performer import CodeableConcept as CC
 from fhirclient.models.period import Period as Per
+from .common import Resource
 
 from operator import attrgetter
 
-class Procedure:
+class Procedure(Resource):
     """Takes a procedure adapter instance and returns valid FHIR data.
 
     A wrapper, basically, for the adapter using fhirclient.
     """
-
-    def __init__(self, adapter):
-        self.adapter = adapter
-        self._import_data()
 
     def _import_data(self):
         pr = PR()
@@ -83,11 +80,5 @@ class Procedure:
 
         # notes
         pr.notes = A({'text': self.adapter.notes.text})
-
-        self.procedure = pr
-
-    @property
-    def fhir_json(self):
-        return self.procedure.as_json()
 
 __all__ = ['Procedure']

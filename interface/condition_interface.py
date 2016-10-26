@@ -4,16 +4,13 @@ from fhirclient.models.fhirdate import FHIRDate as FD
 from fhirclient.models.codeableconcept import CodeableConcept as CC
 from fhirclient.models.coding import Coding as C
 from operator import attrgetter
+from .common import Resource
 
-class Condition:
+class Condition(Resource):
     """Wrapper for adapter using fhirclient models.
 
     FHIR Condition resource
     """
-
-    def __init__(self, adapter):
-        self.adapter = adapter
-        self._import_data()
 
     def _import_data(self):
         con = C()
@@ -50,10 +47,6 @@ class Condition:
                     'coding':
                         [C({'display': d, 'code': c, 'severity': s})]})
 
-        self.condition = con
-
-        @property
-        def fhir_json(self):
-            return self.condition.as_json()
+        self.resource = con
 
 __all__ = ['Condition']

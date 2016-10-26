@@ -5,11 +5,9 @@ from fhirclient.models.codeableconcept import CodeableConcept as CC
 from fhirclient.models.fhirreference import Patient as FR
 from fhirclient.models.quantity import Quantity as Q
 from operator import attrgetter
+from .common import Resource
 
-class Observation:
-    def __init__(self, adapter):
-        self.adapter = adapter
-        self._import_data()
+class Observation(Resource):
 
     def _import_data(self):
         getter = attrgetter('system', 'code', 'display')
@@ -78,10 +76,6 @@ class Observation:
                                     'high': Q({'value': h}),
                                     'meaning': cc})
 
-        self.observation = o
-
-    @property
-    def fhir_json(self):
-        self.observation.as_json()
+        self.resource = o
 
 __all__ = ['Observation']

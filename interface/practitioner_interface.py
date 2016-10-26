@@ -5,16 +5,13 @@ from fhirclient.models.humanname import HumanName as HN
 from fhirclient.models.coding import Coding as C
 from fhirclient.models.codeableconcept import CodeableConcept as CC
 from fhirclient.models.identifier import Identifier as ID
+from .common import Resource
 
-class Practitioner:
+class Practitioner(Resource):
     """Class representing FHIR Practitioner Resource
 
         Wrapper for adapter via fhirclient
     """
-
-    def __init__(self, adapter):
-        self.adapter = adapter
-        self._import_data()
 
     def _import_data(self):
         p = P()
@@ -75,11 +72,6 @@ class Practitioner:
                             for spec in data.specialty]
             p.practionerRole.append(pr)
 
-        self.practitioner = p
-
-
-    @property
-    def fhir_json(self):
-        self.practitioner.as_json()
+        self.resource = p
 
 __all__ = ['Practitioner']

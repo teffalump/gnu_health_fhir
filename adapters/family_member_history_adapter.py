@@ -55,16 +55,16 @@ class familyMemberHistoryAdapter:
         return date.strftime("%Y-%m-%d") if date is not None else None
 
     @property
-    def subject(self):
+    def patient(self):
         """Relevant patient
 
         Returns: namedtuple (Reference)
         """
 
-        subject = self.member.patient
-        if subject:
-            r = Reference(display=subject.rec_name,
-                            reference='/'.join(['Patient', str(subject.id)]))
+        patient = self.member.patient
+        if patient:
+            r = Reference(display=patient.rec_name,
+                            reference='/'.join(['Patient', str(patient.id)]))
             return r
 
     @property
@@ -106,6 +106,6 @@ class familyMemberHistoryAdapter:
             code.text = coding.display = path.name
             code.coding = coding
             condition = Condition(code=code)
-            return condition
+            return [condition]
 
 __all__ = ['familyMemberHistoryAdapter']

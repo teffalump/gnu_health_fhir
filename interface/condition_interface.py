@@ -1,4 +1,4 @@
-from fhirclient.models.condition import Condition as C
+from fhirclient.models.condition import Condition as Con
 from fhirclient.models.fhirreference import FHIRReference as FR
 from fhirclient.models.fhirdate import FHIRDate as FD
 from fhirclient.models.codeableconcept import CodeableConcept as CC
@@ -13,7 +13,7 @@ class Condition(Resource):
     """
 
     def _import_data(self):
-        con = C()
+        con = Con()
 
         # patient
         con.patient = FR({'display': self.adapter.patient.display,
@@ -39,13 +39,13 @@ class Condition(Resource):
         d, c, s = attrgetter('display', 'code', 'system')(self.adapter.severity.coding[0])
         con.severity = CC({'text': self.adapter.severity.text,
                     'coding':
-                        [C({'display': d, 'code': c, 'severity': s})]})
+                        [C({'display': d, 'code': c, 'system': s})]})
 
         # code
         d, c, s = attrgetter('display', 'code', 'system')(self.adapter.code.coding[0])
         con.code = CC({'text': self.adapter.code.text,
                     'coding':
-                        [C({'display': d, 'code': c, 'severity': s})]})
+                        [C({'display': d, 'code': c, 'system': s})]})
 
         self.resource = con
 

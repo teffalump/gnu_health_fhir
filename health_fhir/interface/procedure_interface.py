@@ -7,6 +7,7 @@ from fhirclient.models.fhirdate import FHIRDate as FD
 from fhirclient.models.codeableconcept import CodeableConcept as CC
 from fhirclient.models.performer import CodeableConcept as CC
 from fhirclient.models.period import Period as Per
+from health_fhir.adapters import conditionAdapter
 from .common import Resource
 
 from operator import attrgetter
@@ -16,6 +17,10 @@ class Procedure(Resource):
 
     A wrapper, basically, for the adapter using fhirclient.
     """
+
+    def __init__(self, model):
+        adapter = conditionAdapter(model)
+        super().__init__(adapter)
 
     def _import_data(self):
         pr = PR()

@@ -1,4 +1,5 @@
 from type_definitions import Reference, Identifier, CodeableConcept, Coding
+from utils import TIME_FORMAT
 
 class diagnosticReportAdapter:
     """
@@ -28,7 +29,7 @@ class diagnosticReportAdapter:
         """
 
         t = self.report.date_analysis
-        return t.strftime("%Y-%m-%dT%H:%M:%S") if t is not None else None
+        return t.strftime(TIME_FORMAT) if t is not None else None
 
     @property
     def identifier(self):
@@ -46,9 +47,8 @@ class diagnosticReportAdapter:
         #if report and patient and date:
             #label = '{0}: {1} on {2}'.format(report.name, patient.rec_name or '<unknown>', date.strftime('%Y-%m-%d'))
 
-        return Identifier(value=str(report.id),
-                                use='official')
-
+        return [Identifier(value=str(report.id),
+                                use='official')]
 
     @property
     def code(self):
@@ -61,7 +61,7 @@ class diagnosticReportAdapter:
 
         test = self.report.test
         if test:
-            cc = CodeableConcept()
+            cc = CodeableConcept(text=test.name)
             coding = Coding(display=test.name,
                                 code=test.code)
             cc.coding = [coding]
@@ -86,7 +86,7 @@ class diagnosticReportAdapter:
         """
 
         t = self.report.write_date
-        return t.strftime("%Y-%m-%dT%H:%M:%S") if t is not None else None
+        return t.strftime(TIME_FORMAT) if t is not None else None
 
     @property
     def result(self):

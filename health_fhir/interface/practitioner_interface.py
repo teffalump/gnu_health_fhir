@@ -5,6 +5,7 @@ from fhirclient.models.humanname import HumanName as HN
 from fhirclient.models.coding import Coding as C
 from fhirclient.models.codeableconcept import CodeableConcept as CC
 from fhirclient.models.identifier import Identifier as ID
+from health_fhir.adapters import practitionerAdapter
 from .common import Resource
 
 class Practitioner(Resource):
@@ -12,6 +13,10 @@ class Practitioner(Resource):
 
         Wrapper for adapter via fhirclient
     """
+
+    def __init__(self, model):
+        adapter = practitionerAdapter(model)
+        super().__init__(adapter)
 
     def _import_data(self):
         p = P()

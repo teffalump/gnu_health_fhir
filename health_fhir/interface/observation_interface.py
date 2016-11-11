@@ -4,10 +4,15 @@ from fhirclient.models.coding import Coding as C
 from fhirclient.models.codeableconcept import CodeableConcept as CC
 from fhirclient.models.fhirreference import Patient as FR
 from fhirclient.models.quantity import Quantity as Q
+from health_fhir.adapters import observationAdapter
 from operator import attrgetter
 from .common import Resource
 
 class Observation(Resource):
+
+    def __init__(self, model):
+        adapter = observationAdapter(model)
+        super().__init__(adapter)
 
     def _import_data(self):
         getter = attrgetter('system', 'code', 'display')

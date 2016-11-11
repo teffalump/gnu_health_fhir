@@ -2,11 +2,16 @@ from fhirclient.models.familymemberhistory import FamilyMemberHistory as FH, Fam
 from fhirclient.models.fhirreference import FHIRReference as FR
 from fhirclient.models.codeableconcept import CodeableConcept as CC
 from fhirclient.models.coding import Coding as C
+from health_fhir.adapters import familyMemberHistoryAdapter
 from operator import attrgetter
 from .common import Resource
 
 class FamilyMemberHistory(Resource):
     """Interface to adapter for Family Member History resource"""
+
+    def __init__(self, model):
+        adapter = familyMemberHistoryAdapter(model)
+        super().__init__(adapter)
 
     def _import_data(self):
         fh = FH()

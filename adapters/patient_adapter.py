@@ -239,9 +239,7 @@ class patientAdapter:
         if self.patient.name.photo:
             b64 = base64.encodestring(self.patient.name.photo) #Standard requires base64
             if b64:
-                a = Attachment()
-                a.data = b64
-                return [a]
+                return [Attachment(data=b64)]
 
     @property
     def maritalStatus(self):

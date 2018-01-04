@@ -1,0 +1,1 @@
+This package aims to provide a functional FHIR interface to GNU Health data models. With the provided classes, one should be able to work with the back-end data from GNU Health in a FHIR-compatible way (through fhirclient).

@@ -1,11 +1,11 @@
 from setuptools import setup
 
 setup(name = 'health_fhir',
-        version = '0.0.1',
+        version = '1.0.0',
         description = 'Provides FHIR interface to GNU Health.',
         url = 'https://github.com/teffalump/health_fhir',
         author = 'teffalump',
-        author_email = 'chris <AT> teffalump <DOT> com',
+        author_email = 'chris@teffalump.com',
         packages = ['health_fhir'],
         install_requires = ['fhirclient'],
         zip_safe = False,

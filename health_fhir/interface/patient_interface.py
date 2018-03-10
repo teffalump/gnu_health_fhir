@@ -22,11 +22,12 @@ class Patient(Resource):
     def _import_data(self):
         patient = P()
 
+        patient.identifier = []
         # identifier
         for ident in self.adapter.identifier:
             id_ = ID({'use': ident.use,
-                'value': ident.value,
-                'type': CC({'text': ident.type.text})})
+                    'value': ident.value,
+                    'type': {'text': ident.type.text}})
             patient.identifier.append(id_)
 
 
@@ -40,8 +41,8 @@ class Patient(Resource):
                         'family': name.family,
                         'prefix': name.prefix,
                         'use': name.use})
-            hn.period = Per({'start': FD(name.period.start),
-                                'end': FD(name.period.end)})
+            hn.period = Per({'start': name.period.start,
+                                'end': name.period.end})
             patient.name.append(hn)
 
         #telecom
@@ -73,37 +74,40 @@ class Patient(Resource):
                     'state': address.state,
                     'postalCode': address.postalCode})
 
-        #careProvider
-        for provider in self.adapter.careProvider:
+        #generalPractitioner
+        gps = []
+        for provider in self.adapter.generalPractitioner:
             fr = FR({'display': provider.display,
                         'reference': provider.reference})
-            patient.careProvider.append(fr)
+            gps.append(fr)
+        patient.generalPractitioner = gps
 
         #communication
+        pcs = []
         for lang in self.adapter.communication:
             cc = CC({'coding':
-                        C(
                             {'code': lang.language.coding.code,
                             'display': lang.language.coding.display,
                             'system': lang.language.coding.system
-                        })})
+                        }})
 
             pc = PC({'preferred': lang.preferred,
                         'language': cc})
-            patient.communication.append(pc)
+            pcs.append(pc)
+        patient.communication = pcs
 
         #photo
+        photos = []
         for i in self.adapter.photo:
             a = A({'data': i.data})
-            patient.photo.append(a)
+            photos.append(a)
+        patient.photo = photos
 
         #marital status
-        patient.maritalStatus = CC(
-                {'coding': C({
-                    'system': self.adapter.maritalStatus.coding.system,
-                    'code': self.adapter.maritalStatus.coding.code,
-                    'display': self.adapter.maritalStatus.coding.display
-                    })})
+        if self.adapter.maritalStatus:
+            codings = [{'system': coding.system, 'code': coding.code, 'display': coding.display} \
+                    for coding in self.adapter.maritalStatus.coding]
+            patient.maritalStatus = CC({'coding': codings})
 
         self.resource = patient
 

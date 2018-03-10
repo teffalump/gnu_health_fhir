@@ -1,10 +1,11 @@
-from .type_definitions import Identifier, CodeableConcept, Coding, HumanName, Period, ContactPoint, Address, communication
+from .type_definitions import Identifier, CodeableConcept, Coding, HumanName, Period, ContactPoint, Address, communication, Reference
 from .utils import safe_attrgetter, TIME_FORMAT
 
 class patientAdapter:
 
     def __init__(self, patient):
         self.patient = patient
+
 
     @property
     def identifier(self):
@@ -21,7 +22,6 @@ class patientAdapter:
             i.value = self.patient.puid or '<UNKNOWN>'
             i.type = CodeableConcept()
             i.type.text = "PUID/MRN"
-
             idents.append(i)
 
         for alt in self.patient.name.alternative_ids:
@@ -45,9 +45,9 @@ class patientAdapter:
         for name in self.patient.name.person_names:
             n = HumanName()
             n.given = [x for x in name.given.split()]
-            n.family = [x for x in name.family.split()]
-            n.prefix = name.prefix
-            n.suffix = name.suffix
+            n.family = name.family
+            n.prefix = [name.prefix]
+            n.suffix = [name.suffix]
             n.use = name.use
             n.period = Period(start=name.date_from, end=name.date_to) #DEBUG Date to string conversion
             names.append(n)
@@ -159,7 +159,7 @@ class patientAdapter:
                 line.append(street)
 
             if line:
-                ad.line = ' '.join(line)
+                ad.line = [' '.join(line)]
 
             if city:
                 ad.city = city
@@ -174,6 +174,7 @@ class patientAdapter:
                 ad.country = country
 
             return [ad]
+        return []
 
     @property
     def active(self):
@@ -185,17 +186,18 @@ class patientAdapter:
         return self.patient.name.active
 
     @property
-    def careProvider(self):
+    def generalPractitioner(self):
         """Return patient's primary care provider
 
-        Returns: List of namedtuple (Reference) only one supported
+        Returns: List of namedtuple (Reference)
         """
 
         pcp = self.patient.primary_care_doctor
         if pcp:
             r = Reference(display=pcp.rec_name)
-            r.reference = ''.join(['Practitioner/', pcp.id])
+            r.reference = ''.join(['Practitioner/', str(pcp.id)])
             return [r]
+        return []
 
     @property
     def managingOrganization(self):
@@ -225,6 +227,7 @@ class patientAdapter:
             com = communication(preferred='true',
                                 language=cc)
             return [com]
+        return []
 
     @property
     def photo(self):
@@ -235,11 +238,13 @@ class patientAdapter:
 
         #TODO Figure out contentType of photo
 
-        import base64
-        if self.patient.name.photo:
-            b64 = base64.encodestring(self.patient.name.photo) #Standard requires base64
-            if b64:
-                return [Attachment(data=b64)]
+        # import base64
+        # if self.patient.name.photo:
+            # print(self.patient.name.photo.decode('utf-8'))
+            # b64 = base64.encodestring(self.patient.name.photo.decode('utf-8')) #Standard requires base64
+            # if b64:
+                # return [Attachment(data=b64)]
+        return []
 
     @property
     def maritalStatus(self):
@@ -251,8 +256,8 @@ class patientAdapter:
         from .value_sets import maritalStatus as ms
         #Health has concubinage and separated, which aren't truly
         # matching FHIR defined statuses
-        us = self.patient.name.marital_status.upper() #Codes are uppercase
-        if us:
+        if self.patient.name.marital_status:
+            us = self.patient.name.marital_status.upper() #Codes are uppercase
             fhir_status = [x for x in ms.contents\
                                     if x['code'] == us]
             ms = CodeableConcept()

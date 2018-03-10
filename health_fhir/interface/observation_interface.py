@@ -2,7 +2,7 @@ from fhirclient.models.observation import Observation as O, ObservationReference
 from fhirclient.models.identifier import Identifier as ID
 from fhirclient.models.coding import Coding as C
 from fhirclient.models.codeableconcept import CodeableConcept as CC
-from fhirclient.models.fhirreference import Patient as FR
+from fhirclient.models.fhirreference import FHIRReference as FR
 from fhirclient.models.quantity import Quantity as Q
 from operator import attrgetter
 from .common import Resource

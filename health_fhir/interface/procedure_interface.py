@@ -5,7 +5,6 @@ from fhirclient.models.fhirreference import FHIRReference as FR
 from fhirclient.models.coding import Coding as C
 from fhirclient.models.fhirdate import FHIRDate as FD
 from fhirclient.models.codeableconcept import CodeableConcept as CC
-from fhirclient.models.performer import CodeableConcept as CC
 from fhirclient.models.period import Period as Per
 from .common import Resource
 

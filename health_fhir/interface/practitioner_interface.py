@@ -1,4 +1,5 @@
-from fhirclient.models.practitioner import Practitioner as P, PractitionerPractitionerRole as PR
+from fhirclient.models.practitioner import Practitioner as P
+from fhirclient.models.practitionerrole import PractitionerRole as PR
 from fhirclient.models.fhirdate import FHIRDate as FD
 from fhirclient.models.contactpoint import ContactPoint as CP
 from fhirclient.models.humanname import HumanName as HN

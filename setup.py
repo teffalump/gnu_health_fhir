@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name = 'health_fhir',
-        version = '1.0.0',
+        version = '1.0.1',
         description = 'Provides FHIR interface to GNU Health.',
         url = 'https://github.com/teffalump/health_fhir',
         author = 'teffalump',

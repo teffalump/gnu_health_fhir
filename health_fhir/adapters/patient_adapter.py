@@ -265,8 +265,8 @@ class patientAdapter:
                 code = fhir_status[0]['code']
                 display = fhir_status[0]['display']
             else:
-                code = supermod.code(value='OTH')
-                display = supermod.string(value='other')
+                code = 'OTH'
+                display = 'other'
             ms.coding = [ Coding(system='http://hl7.org/fhir/v3/MaritalStatus',
                                 code=code,
                                 display=display)]

@@ -8,7 +8,7 @@ class conditionAdapter:
         self.condition = condition
 
     @property
-    def patient(self):
+    def subject(self):
         """Patient who has condition
 
         Returns: namedtuple (Reference)

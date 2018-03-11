@@ -46,8 +46,8 @@ class patientAdapter:
             n = HumanName()
             n.given = [x for x in name.given.split()]
             n.family = name.family
-            n.prefix = [name.prefix]
-            n.suffix = [name.suffix]
+            n.prefix = [name.prefix] if name.prefix else []
+            n.suffix = [name.suffix] if name.suffix else []
             n.use = name.use
             n.period = Period(start=name.date_from, end=name.date_to) #DEBUG Date to string conversion
             names.append(n)

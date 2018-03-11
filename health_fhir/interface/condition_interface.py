@@ -16,36 +16,39 @@ class Condition(Resource):
         con = Con()
 
         # patient
-        con.patient = FR({'display': self.adapter.patient.display,
-                        'reference': self.adapter.patient.reference})
+        con.subject = FR({'display': self.adapter.subject.display,
+                        'reference': self.adapter.subject.reference})
 
         # asserter
-        con.asserter = FR({'display': self.adapter.asserter.display,
-                        'reference': self.adapter.asserter.reference})
+        if self.adapter.asserter:
+            con.asserter = FR({'display': self.adapter.asserter.display,
+                            'reference': self.adapter.asserter.reference})
 
         # dateRecorded
-        con.dateRecorded = FD({'date': self.adapter.dateRecorded})
+        con.dateRecorded = FD(self.adapter.dateRecorded)
 
         # notes
         con.notes = self.adapter.notes
 
         # abatementDateTime
-        con.abatementDateTime = FD({'date': self.adapter.abatementDateTime})
+        con.abatementDateTime = FD(self.adapter.abatementDateTime)
 
         # verificationStatus
         con.verificationStatus = self.adapter.verificationStatus
 
         # severity
-        d, c, s = attrgetter('display', 'code', 'system')(self.adapter.severity.coding[0])
-        con.severity = CC({'text': self.adapter.severity.text,
-                    'coding':
-                        [C({'display': d, 'code': c, 'system': s})]})
+        if self.adapter.severity:
+            d, c, s = attrgetter('display', 'code', 'system')(self.adapter.severity.coding[0])
+            con.severity = CC({'text': d,
+                        'coding':
+                            [{'display': d, 'code': c, 'system': s}]})
 
         # code
-        d, c, s = attrgetter('display', 'code', 'system')(self.adapter.code.coding[0])
-        con.code = CC({'text': self.adapter.code.text,
-                    'coding':
-                        [C({'display': d, 'code': c, 'system': s})]})
+        if self.adapter.code:
+            d, c, s = attrgetter('display', 'code', 'system')(self.adapter.code.coding[0])
+            con.code = CC({'text': d,
+                        'coding':
+                            [{'display': d, 'code': c, 'system': s}]})
 
         self.resource = con
 

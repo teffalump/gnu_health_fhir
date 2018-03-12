@@ -24,10 +24,10 @@ class Observation(Resource):
 
         # interpretation
         sys, code, display = getter(self.adapter.interpretation.coding[0])
-        c = C({'system': sys,
+        c = {'system': sys,
                 'code': code,
                 'display': display
-                })
+                }
         o.interpretation = CC({'text': self.adapter.observation.text,
                                 'coding': [c]})
 
@@ -45,8 +45,8 @@ class Observation(Resource):
         # code
         _, code, display = getter(self.adapter.code.coding[0])
         o.code = CC({'text': self.adapter.text,
-                        'coding': [ C({'code': code,
-                                        'display': display}) ]
+                        'coding': [ {'code': code,
+                                        'display': display} ]
                     })
 
         # performer
@@ -68,9 +68,9 @@ class Observation(Resource):
         # referenceRange
         s, c, d = getter(self.adapter.referenceRange.meaning.coding[0])
         cc = CC({'text': self.adapter.referenceRange.meaning.text,
-                    'coding': [ C({'display': d,
+                    'coding': [ {'display': d,
                                     'system': s,
-                                    'code': c}) ]})
+                                    'code': c} ]})
         l, h = attrgetter('low', 'high')(self.adapter.referenceRange)
         o.ReferenceRange = RR({'low': Q({'value': l}),
                                     'high': Q({'value': h}),

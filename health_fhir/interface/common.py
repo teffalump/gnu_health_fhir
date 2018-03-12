@@ -14,13 +14,13 @@ class Resource:
         raise NotImplemented
 
     @property
-    def fhirAsJson(self):
+    def json(self):
         '''Return FHIR-valid JSON'''
 
-        self.resource.as_json()
+        self.as_json()
 
     @property
-    def fhirAsXML(self):
+    def xml(self):
         '''Return FHIR-valid XML'''
 
-        raise NotImplemented # truly not implemented
+        raise NotImplemented

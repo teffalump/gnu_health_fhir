@@ -1,160 +1,116 @@
-from .type_definitions import ContactPoint, HumanName, Identifier, CodeableConcept, Coding, Reference, Period, practitionerRole
 from operator import attrgetter
+from fhirclient.models import practitioner
 
-class practitionerAdapter:
-    def __init__(self, hp):
-        self.hp = hp
+class Practitioner(practitioner.Practitioner):
 
-    @property
-    def active(self):
-        """Active or not
+    def __init__(self, practitioner):
+        jsondict = self._get_jsondict(practitioner)
+        super(Practitioner, self).__init__(jsondict=jsondict)
 
-        Returns: True or False
-        """
+    def _get_jsondict(self, hp):
+        jsondict = {}
 
-        return self.hp.name.active
+        #active
+        jsondict['active']= hp.name.active
 
-    @property
-    def telecom(self):
-        """Retrieve contact information for doctor
-
-        Returns: List of namedtuple (ContactPoint)
-        """
-
+        #telecom
         telecom = []
-        for contact in self.hp.name.contact_mechanisms:
-            c = ContactPoint()
-            c.value = contact.value
+        for contact in hp.name.contact_mechanisms:
+            c = {'value': contact.value}
             if contact.type == 'phone':
-                c.system='phone'
-                c.use='home'
+                c['system'] = 'phone'
+                c['use'] = 'home'
             elif contact.type == 'mobile':
-                c.system='phone'
-                c.use='mobile'
+                c['system'] = 'phone'
+                c['use'] = 'mobile'
             else:
-                c.use = c.system = contact.type
+                c['use'] = c['system'] = contact.type
             telecom.append(c)
+        if telecom:
+            jsondict['telecom'] = telecom
 
-        return telecom
+        #name
+        names = []
+        for name in hp.name.person_names:
+            n = {}
+            n['given'] = [x for x in name.given.split()]
+            n['family'] = name.family
+            n['prefix'] = [name.prefix] if name.prefix else []
+            n['suffix'] = [name.suffix] if name.suffix else []
+            n['use'] = name.use
+            n['period'] = {'start': name.date_from, 'end': name.date_to} #DEBUG Date to string conversion
+            names.append(n)
+        if names:
+            jsondict['name'] = names
+        else:
+            #try in default fields
+            n = {}
+            n['given'] = [x for x in hp.name.name.split()]
+            n['family'] = hp.name.lastname
+            n['use'] = 'official'
+            jsondict['name'] = [n]
 
-    @property
-    def name(self):
-        """Practitioner's name
-
-        Returns: namedtuple (HumanName)
-        """
-
-        for name in self.hp.name.person_names:
-            if name.use in ('official', 'usual'):
-                n = HumanName()
-                n.given = [x for x in name.given.split()]
-                n.family = [x for x in name.family.split()]
-                n.prefix = name.prefix
-                n.suffix = name.suffix
-                n.use = name.use
-                n.period = Period(start=name.date_from, end=name.date_to) #DEBUG Date to string conversion
-                return n
-
-    @property
-    def identifier(self):
-        """Retrieve a list of ids
-
-        Returns: List of namedtuple (Identifier)
-        """
-
+        #identifier
         idents = []
-        if self.hp.puid:
-            i = Identifier()
-            i.use = 'usual'
-            i.value = self.hp.puid or '<UNKNOWN>'
-            i.type = CodeableConcept()
-            i.type.text = "PUID/MRN"
-
+        if hp.puid:
+            i = {'use': 'usual',
+                    'value': hp.puid or '<UNKNOWN>',
+                    'type': {'text': 'PUID/MRN'}}
             idents.append(i)
 
-        for alt in self.hp.name.alternative_ids:
-            i = Identifier()
-            i.use = 'official'
-            i.value = alt.code or '<UNKNOWN>'
-            i.type = CodeableConcept()
-            i.type.text = alt.alternative_id_type
+        for alt in hp.name.alternative_ids:
+            i = {'use': 'official',
+                    'value': alt.code or '<UNKNOWN>',
+                    'type': {'text': alt.alternative_id_type}}
             idents.append(i)
+        if idents: jsondict['identifier'] = idents
 
-        return idents
 
-    @property
-    def gender(self):
-        """Gender
-
-        Returns: string ( male | female | other | unknown )
-        """
-
-        g = self.hp.name.gender
+        #gender
+        g = hp.name.gender
         if g:
             if g == 'f':
-                return 'female'
+                l = 'female'
             elif g == 'm':
-                return 'male'
+                l = 'male'
             else:
-                return 'other'
+                l = 'other'
+        else:
+            l = 'unknown'
+        jsondict['gender'] = l
 
-        return 'unknown'
-
-    @property
-    def communication(self):
-        """Languages practitioner speaks
-
-        Returns: List of namedtuple (CodeableConcept) -- only one supported
-        """
-
-        lang = self.hp.name.lang
+        #communication
+        lang = hp.name.lang
         if lang:
-            cc = CodeableConcept(text=lang.name)
-            c = Coding()
+            cc = {'text': lang.name}
             from re import sub
-            c.code = sub('_','-', lang.code) #Standard requires dashes
-            c.display = lang.name
-            c.system = 'urn:ietf:bcp:47'
-            cc.coding = [c]
-            return [cc]
-
-    @property
-    def practitionerRole(self):
-        """Roles and specialties
-
-        Returns: List of namedtuple (practitionerRole) --- only one supported
-        """
+            c = {'code': sub('_','-', lang.code),
+                    'display': lang.name,
+                    'system': 'urn:ietf:bcp:47'}
+            cc['coding'] = [c]
+            jsondict['communication'] = [cc]
 
         #TODO Handle the specialties and roles better
         #     Specifically, output better job titles -- e.g., radiology tech, etc.
+        # inst = self.hp.institution
+        # occ = self.hp.name.occupation.name #Is this the right place for employee job title?
 
-        inst = self.hp.institution
-        occ = self.hp.name.occupation.name #Is this the right place for employee job title?
+        # role = CodeableConcept(text=occ, coding=[Coding(display=occ)])
 
-        role = CodeableConcept(text=occ, coding=[Coding(display=occ)])
+        # organization = Reference(display=inst.rec_name,
+                        # reference='/'.join(['Organization', str(inst.id)]))
 
-        organization = Reference(display=inst.rec_name,
-                        reference='/'.join(['Organization', str(inst.id)]))
+        # specialties = []
+        # for spec in self.hp.specialties:
+            # code, name = attrgetter('specialty.code', 'specialty.name')(spec)
+            # cc = CodeableConcept(text=name)
+            # cc.coding = [Coding(code=code,
+                            # display=name)]
+            # specialties.append(cc)
 
-        specialties = []
-        for spec in self.hp.specialties:
-            code, name = attrgetter('specialty.code', 'specialty.name')(spec)
-            cc = CodeableConcept(text=name)
-            cc.coding = [Coding(code=code,
-                            display=name)]
-            specialties.append(cc)
+        # pr = practitionerRole(role=role, specialty=specialties,
+                                # managingOrganization=organization)
 
-        pr = practitionerRole(role=role, specialty=specialties,
-                                managingOrganization=organization)
-        return [pr]
+        return jsondict
 
-    @property
-    def qualification(self):
-        """Training and certification information
-
-        Returns: List of namedtuple (qualification)
-        """
-
-        #TODO
-
-        pass
+__all__=['Practitioner']

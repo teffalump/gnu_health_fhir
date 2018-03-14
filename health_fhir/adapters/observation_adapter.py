@@ -1,49 +1,33 @@
-from .type_definitions import Identifier, CodeableConcept, Coding, Reference, Quantity, ReferenceRange
-from .utils import TIME_FORMAT
+from .utils import TIME_FORMAT, safe_attrgetter
+from fhirclient.models import observation
 
-class observationAdapter:
-    """Interface between FHIR Observation resource and data models"""
+class Observation(observation.Observation):
 
     def __init__(self, observation):
-        self.observation = observation
+        jsondict = self._get_jsondict(observation)
+        super(Observation, self).__init__(jsondict=jsondict)
 
-    @property
-    def comments(self):
-        """Comments about the result
+    def _get_jsondict(self, observation):
+        jsondict = {}
 
-        Returns: string
-        """
+        #comment
+        jsondict['comment'] = observation.remarks
 
-        return self.observation.remarks
+        #identifier
+        jsondict['identifier'] = [{'use': 'official',
+                                    'value': '-'.join([observation.name, str(observation.id)])}]
 
-    @property
-    def identifier(self):
-        """The identifiers for this observation
-
-        Returns: List of namedtuple (Identifier) -- only one supported
-        """
-
-        i = Identifier(use='official',
-                value='-'.join([self.observation.name, str(self.observation.id)]))
-        return [i]
-
-    @property
-    def interpretation(self):
-        """Result interpretation (high, low, etc.)
-
-        Returns: namedtuple (CodeableConcept)
-        """
+        #interpretation
         # TODO: Interpretation is complicated
-
-        value = self.observation.result
-        lower_limit = self.observation.lower_limit
-        upper_limit = self.observation.upper_limit
+        value = observation.result
+        lower_limit = observation.lower_limit
+        upper_limit = observation.upper_limit
 
         if value is not None \
             and lower_limit is not None \
             and upper_limit is not None:
-            cc = CodeableConcept()
-            coding = Coding()
+            cc = {}
+            coding = {}
             if value < lower_limit:
                 v = 'L'
                 d = 'Low'
@@ -53,84 +37,55 @@ class observationAdapter:
             else:
                 v = 'N'
                 d = 'Normal'
-            coding.system = 'http://hl7.org/fhir/v2/0078'
-            coding.code = v
-            coding.display = cc.text = d
-            cc.coding = [coding]
-            return cc
+            coding['system'] = 'http://hl7.org/fhir/v2/0078'
+            coding['code'] = v
+            coding['display'] = cc['text'] = d
+            cc['coding'] = [coding]
+            jsondict['interpretation'] = cc
 
-    @property
-    def issued(self):
-        """The time the observation was made available
+        #issued
+        issued = observation.write_date or observation.create_date
+        if issued: jsondict['issued']= issued.strftime(TIME_FORMAT)
 
-        Returns: string
-        """
-
-        issued = self.observation.write_date or self.observation.create_date
-        return issued.strftime(TIME_FORMAT) if issued is not None else None
-
-    @property
-    def code(self):
-        """What was observed
-
-        Returns: namedtuple (CodeableConcept)
-        """
+        #code
         #TODO Better coding!!
-
-        code = self.observation.name
+        code = observation.name
         if code:
-            cc = CodeableConcept(text=code)
-            cc.coding = [Coding(code=code, display=code)]
-            return cc
+            cc = {'text': code}
+            cc['coding'] = [{'code': code, 'display': code}]
+            jsondict['code'] = cc
 
-    @property
-    def performer(self):
-        """Who performed the observation
-
-        Returns: List of namedtuple (Reference) -- only one supported
-        """
-
+        #performer
         persons = []
-        performer = self.observation.gnuhealth_lab_id.pathologist
-        if performer:
-            r = Reference(display=performer.name.rec_name,
-                            reference='/'.join(['Practitioner', str(performer.id)]))
+        performers = [x for x in\
+                        safe_attrgetter(observation, 'gnuhealth_lab_id.pathologist', 'gnuhealth_lab_id.done_by')\
+                        if x]
+        for performer in performers:
+            r = {'display': performer.name.rec_name,
+                    'reference': ''.join(['Practitioner/', str(performer.id)])}
             persons.append(r)
-        return persons
+        if persons: jsondict['performer'] = persons
 
-    @property
-    def referenceRange(self):
-        """The observation's reference range 
-
-        Returns: namedtuple (ReferenceRange)
-        """
-
-        units = self.observation.units.name or 'unknown'
-        lower_limit = self.observation.lower_limit
-        upper_limit = self.observation.upper_limit
+        #referenceRange
+        units = safe_attrgetter(observation, 'units.name', default='unknown')
+        lower_limit = observation.lower_limit
+        upper_limit = observation.upper_limit
 
         if units is not None \
-                and lower_limit is not None \
-                and upper_limit is not None:
-            ref = ReferenceRange()
-            ref.low = lower_limit
-            ref.high = upper_limit
-            ref.meaning = CodeableConcept()
-            coding = Coding()
-            ref.meaning.text = coding.display = 'Normal range'
-            coding.system = 'http://hl7.org/fhir/referencerange-meaning'
-            coding.code = 'normal'
-            ref.meaning.coding = [coding]
-            return ref
+            and lower_limit is not None \
+            and upper_limit is not None:
+                ref = {'low': {'value': lower_limit, 'unit': units},
+                        'high': {'value': upper_limit, 'unit': units}}
+                    # 'meaning': {
+                        # 'text': 'Normal range',
+                        # 'coding': [{
+                            # 'system':'http://hl7.org/fhir/referencerange-meaning',
+                            # 'code': 'normal'}]}}
+                jsondict['referenceRange'] = [ref]
 
-    @property
-    def status(self):
-        """The observation status (final | etc.)
-
-        Returns: string
-        """
-        value = self.observation.result
-        if self.observation.excluded:
+        #status
+        value = observation.result
+        if observation.excluded:
             if value is not None:
                 status = 'cancelled'
             else:
@@ -140,61 +95,27 @@ class observationAdapter:
                 status = 'final'
             else:
                 status = 'registered'
-        return status
+        jsondict['status'] = status
 
-    @property
-    def valueQuantity(self):
-        """The actual result
-
-        Returns: namedtuple (Quantity)
-        """
-
+        #valueQuantity
         #TODO More information
-
-        value = self.observation.result
-        units = self.observation.units.name
-        system = None
-        code = None
+        value = observation.result
+        units = safe_attrgetter(observation, 'units.name', default='unknown')
+        # code = None
         if value is not None:
-            q = Quantity(value=value,
-                            unit=str(units),
-                            code=code,
-                            uri=system)
-            return q
+            jsondict['valueQuantity'] = {'value': value,
+                                        'unit': units}
 
-    @property
-    def subject(self):
-        """Subject of observation (usually patient)
-
-        Returns: namedtuple (Reference)
-        """
-
-        subject = self.observation.gnuhealth_lab_id.patient
+        #subject
+        subject = safe_attrgetter(observation, 'gnuhealth_lab_id.patient')
         if subject:
-            r = Reference(display=subject.name.rec_name,
-                            reference='/'.join(['Patient', str(subject.id)]))
-            return r
+            jsondict['subject'] = {'display': subject.name.rec_name,
+                                    'reference': ''.join(['Patient/', str(subject.id)])}
 
-    @property
-    def effectiveDateTime(self):
-        """Clinically relevant time for observation
+        #effectiveDateTime
+        t = safe_attrgetter(observation, 'gnuhealth_lab_id.date_analysis')
+        if t: jsondict['effectiveDateTime'] = t.strftime(TIME_FORMAT)
 
-        Returns: string
-        """
+        return jsondict
 
-        t = self.observation.gnuhealth_lab_id.date_analysis
-        return t.strftime(TIME_FORMAT) if t is not None else None
-
-    @property
-    def specimen(self):
-        pass
-
-    @property
-    def related(self):
-        pass
-
-    @property
-    def method(self):
-        pass
-
-__all__ = ['observationAdapter']
+__all__=['Observation']

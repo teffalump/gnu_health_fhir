@@ -1,5 +1,4 @@
-from operator import attrgetter
-from .utils import TIME_FORMAT
+from .utils import safe_attrgetter, TIME_FORMAT
 from fhirclient.models import procedure
 
 class Procedure(procedure.Procedure):
@@ -90,7 +89,7 @@ class Procedure(procedure.Procedure):
                     'reference': ''.join(['Practitioner/', str(m.team_member.id)])}
             role =  {}
             if m.role:
-                code, name = attrgetter('role.specialty.code', 'role.specialty.name')(m)
+                code, name = safe_attrgetter(m, 'role.specialty.code', 'role.specialty.name')
                 role = {'text': name,
                         'coding': [{'code': code,
                                     'display': name}]}
@@ -98,7 +97,7 @@ class Procedure(procedure.Procedure):
         if actors: jsondict['performer'] = actors
 
         #performedPeriod
-        start, end = attrgetter('name.surgery_date', 'name.surgery_end_date')(procedure)
+        start, end = safe_attrgetter(procedure, 'name.surgery_date', 'name.surgery_end_date')
         if start is not None:
             p = {'start': start.strftime(TIME_FORMAT)}
             if end is not None:

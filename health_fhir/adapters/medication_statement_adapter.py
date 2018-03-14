@@ -1,80 +1,46 @@
-from .type_definitions import Reference, Identifier, CodeableConcept, Coding, Period, dosage, Quantity, Timing, repeat
 from .utils import TIME_FORMAT, safe_attrgetter
+from fhirclient.models import medicationstatement
 
-class medicationStatementAdapter:
-    """Adapter for patient medications"""
+class MedicationStatement(medicationstatement.MedicationStatement):
 
     def __init__(self, med):
-        self.med = med
+        jsondict = self._get_jsondict(med)
+        super(MedicationStatement, self).__init__(jsondict=jsondict)
 
-    @property
-    def identifier(self):
-        """Identifiers for medication
+    def _get_jsondict(self, med):
+        jsondict = {}
 
-        Returns:
-            List of namedlist (Identifier) --- only one supported
-        """
+        #identifier
+        jsondict['identifier']= [{'use': 'official',
+                                    'value': '-'.join([med.medicament.rec_name,
+                                        str(med.id)])}]
 
-        i = Identifier(use='official',
-                    value='-'.join([self.med.medicament.rec_name,
-                                    str(self.med.id)]))
-        return [i]
+        #subject
+        subject = med.name
+        jsondict['subject'] = {'display': subject.name.rec_name,
+                            'reference': '/'.join(['Patient', str(subject.id)])}
 
-    @property
-    def patient(self):
-        """Who is taking the medication
+        #TODO
+        #informationSource #See if we can determine this in Health?
 
-        Returns:
-            namedlist (Reference)
-        """
-        patient = self.med.name
-        return Reference(display=patient.name.rec_name,
-                            reference='/'.join(['Patient', str(patient.id)]))
+        #dateAsserted - Use create/write date?
+        date = med.create_date
+        jsondict['dateAsserted'] = date.strftime('%Y-%m-%d')
 
-    @property
-    def informationSource(self):
-        """Who asserted the information
 
-        Returns:
-            namedlist (Reference)
-        """
-
-        return None #See if we can determine this in Health?
-
-    @property
-    def dateAsserted(self):
-        """When asserted
-
-        Returns:
-            string
-        """
-
-        pass #Use create/write date?
-
-    @property
-    def status(self):
-        """Status of medication statement (REQUIRED)
-
-        Returns:
-            string (active | completed | entered-in-error | intended)
-        """
-
-        if self.med.is_active:
-            return 'active'
-        elif self.med.course_completed or self.med.discontinued:
-            return 'completed'
+        #status
+        if med.is_active:
+            s = 'active'
+        elif med.course_completed:
+            s = 'completed'
+        elif med.discontinued:
+            s = 'stopped'
         else:
-            return 'intended'
+            s = 'intended'
+        jsondict['status'] = s
 
-    @property
-    def dosage(self):
-        """The dosage information
-
-        Returns:
-            List of namedlist (dosage)
-        """
+        #dosage
         # TODO Can always add more information!
-
         code_conv = {
                 'seconds': 's',
                 'minutes': 'min',
@@ -83,149 +49,112 @@ class medicationStatementAdapter:
                 'months': 'mo',
                 'years': 'a'}
 
-        dose = dosage()
-
+        dose = {}
         # Amount (this should be listed, but could be patient reported)
-        if self.med.dose:
-            dose.quantityQuantity = Quantity(value=str(self.med.dose),
-                                        unit=self.med.dose_unit.name)
+        if med.dose:
+            dose['doseQuantity'] = {'value': med.dose,
+                                    'unit': med.dose_unit.name}
 
         # Route
         #     TODO Standard route values
-        route = self.med.route
+        route = med.route
         if route:
-            cc = CodeableConcept()
-            c = Coding()
-            cc.text = c.display = route.name
-            c.code = route.code
-            cc.coding = [c]
-            dose.route = cc
+            cc = {}
+            c = {}
+            cc['text'] = c['display'] = route.name
+            c['code'] = route.code
+            cc['coding'] = [c]
+            dose['route'] = cc
 
         # PRN
-        if self.med.frequency_prn or safe_attrgetter(self.med, 'common_dosage.abbreviation') == 'prn':
-            dose.asNeededBoolean = 'true'
+        if med.frequency_prn or (safe_attrgetter(med, 'common_dosage.abbreviation') == 'prn'):
+            dose['asNeededBoolean'] = True
         else:
-            dose.asNeededBoolean = 'false'
+            dose['asNeededBoolean'] = False
+        
+        #TODO
+        # Site and Method 
 
-        # Site and Method -- ignore
-        #     Could add 'form' info (from the model)
-
-        timing = Timing()
-
-        if self.med.frequency: #prefer specific information
-
-            rep = repeat()
-
-            if self.med.duration_period is not 'indefinite':
-                rep.duration = str(self.med.duration)
-                rep.durationUnits = code_conv.get(self.med.duration_period)
+        #timing
+        #BID | TID | QID | AM | PM | QD | QOD | Q4H | Q6H +.
+        timing = {}
+        if med.frequency: #prefer specific information
+            rep = {}
+            if med.duration_period is not 'indefinite':
+                rep['duration'] = med.duration
+                rep['durationUnits'] = code_conv.get(med.duration_period)
 
             # Health stores timing as 1 per X s/min/hr
-            rep.frequency = '1'
-            rep.period = str(self.med.frequency)
-            rep.periodUnits = code_conv.get(self.med.frequency_unit)
+            rep['frequency'] = '1'
+            rep['period'] = med.frequency
+            rep['periodUnits'] = code_conv.get(med.frequency_unit)
 
-            timing.repeat = rep
+            timing['repeat'] = rep
 
-        elif self.med.common_dosage:
+        elif med.common_dosage:
 
-            c = Coding(display=self.med.common_dosage.abbreviation,
-                        system='http://snomed.info/sct',
-                        code=self.med.common_dosage.code)
+            c = {'display': med.common_dosage.abbreviation,
+                    'system': 'http://snomed.info/sct',
+                    'code': med.common_dosage.code}
 
-            timing.code = CodeableConcept(text=self.med.common_dosage.name,
-                                            coding=[c])
+            timing['code'] = {'text': med.common_dosage.name,
+                            'coding': [c]}
 
         else: #No dosage information (either unknown or incomplete)
             timing = None
-
-        dose.timing = timing
+        if timing:
+            dose['timing'] = timing
 
         #Rate - rateRatio
         #    Only if an infusion -- always mL/hr (I think?)
-        if self.med.infusion:
-            num = Quantity(value=str(self.med.infusion_rate),
-                            unit='mL')
-            den = Quantity(value='1',
-                            unit='hr')
-            dose.rateRatio = Ratio(numerator=num,
-                                denominator=den)
+        if med.infusion:
+            num = {'value': med.infusion_rate,
+                    'unit': 'mL'}
+            den = {'value': 1,
+                    'unit': 'hr'}
+            dose['rateRatio'] = {'numerator': num,
+                                'denominator': den}
+        jsondict['dosage'] = [dose]
 
-        return [dose]
+        #taken
+        #TODO Health equivalent?
+        #y | n | unk | na
+        if not med.discontinued:
+            jsondict['taken'] = 'y'
+        else:
+            jsondict['taken'] = 'n'
 
-    @property
-    def wasNotTaken(self):
-        """Was not taken
 
-        Returns:
-            string ('true' | 'false')
-        """
+        #reasonNotTaken
+        if med.discontinued:
+            jsondict['reasonNotTaken'] = {'text': med.discontinued_reason or '<unknown>'}
 
-        return 'false' #Any Health equivalent?
-
-    @property
-    def reasonNotTaken(self):
-        """Why not taken
-
-        Returns:
-            List of namedlist (CodeableConcept)
-        """
-
-        pass #Any Health equivalent?
-
-    @property
-    def reasonForUseCodeableConcept(self):
-        """Why medication was taken
-
-        Returns:
-            namedlist (CodeableConcept)
-        """
-
+        #reasonCode
         # Ideally should make indication connect to patient condition
-        reason = self.med.indication
+        reason = med.indication
         if reason:
-            cc = CodeableConcept(text=reason.name)
-            coding = Coding(system='urn:oid:2.16.840.1.113883.6.90', #ICD-10-CM
-                            code=reason.code,
-                            display=reason.name)
-            cc.coding=[coding]
-            return cc
+            cc = {'text': reason.name}
+            coding = {'system': 'urn:oid:2.16.840.1.113883.6.90', #ICD-10-CM
+                        'code': reason.code,
+                        'display': reason.name}
+            cc['coding']=[coding]
+            jsondict['reasonCode'] = [cc]
 
-    @property
-    def effectivePeriod(self):
-        """Over what period
-
-        Returns:
-            namedlist (Period)
-        """
-
-        start, end = self.med.start_treatment, self.med.end_treatment
+        #effectivePeriod
+        start, end = med.start_treatment, med.end_treatment
         if start:
-            p = Period(start=start.strftime(TIME_FORMAT))
+            p = {'start': start.strftime(TIME_FORMAT)}
             if end:
-                p.end = end.strftime(TIME_FORMAT)
-            return p
+                p['end'] = end.strftime(TIME_FORMAT)
+            jsondict['effectivePeriod'] = p
 
-    @property
-    def note(self):
-        """Additional information
+        #note
+        if med.notes: jsondict['note'] = {'text': med.notes}
 
-        Returns:
-            string
-        """
+        #medicationCodeableConcept
+        #TODO Fill this out more
+        jsondict['medicationCodeableConcept'] = {'text': med.medicament.rec_name}
 
-        return self.med.notes
+        return jsondict
 
-    @property
-    def medicationReference(self):
-        """The medication taken
-
-        Returns:
-            namedlist (Reference)
-        """
-
-        med = self.med.medicament
-        return Reference(display=med.active_component,
-                            reference='/'.join(['Medication', str(med.id)]))
-
-__all__ = ['medicationStatementAdapter']
+__all__ = ['MedicationStatement']

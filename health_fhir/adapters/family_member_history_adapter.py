@@ -1,18 +1,16 @@
-from .type_definitions import Condition, CodeableConcept, Coding, Reference
+from fhirclient.models import  familymemberhistory
 
-class familyMemberHistoryAdapter:
-    #TODO Add more info to family history data model on Health side
+class FamilyMemberHistory(familymemberhistory.FamilyMemberHistory):
 
     def __init__(self, member):
-        self.member = member
+        jsondict = self._get_jsondict(member)
+        super(FamilyMemberHistory, self).__init__(jsondict=jsondict)
 
-    @property
-    def gender(self):
-        """Family member gender
+    def _get_jsondict(self, member):
+        #TODO Add more info to family history data model on Health side
+        jsondict = {}
 
-        Returns: string (male | female | etc.)
-        """
-
+        #gender
         ### NOTE KEEP THIS UPDATED ###
         # Possible selections (currently)
         #
@@ -33,79 +31,58 @@ class familyMemberHistoryAdapter:
         # Unknown
         # 'cousin'
 
-        member = self.member
         females = ['mother', 'sister', 'aunt', 'niece', 'grandmother']
         males = ['father', 'brother', 'uncle', 'nephew', 'grandfather']
-
-        if member in females:
-            return 'female'
-        elif member in males:
-            return 'male'
+        rel = member.relative
+        if rel in females:
+            g = 'female'
+        elif rel in males:
+            g = 'male'
         else:
-            return 'unknown'
+            g = 'unknown'
+        jsondict['gender'] = g
 
-    @property
-    def date(self):
-        """When captured or updated
+        #date
+        date = member.write_date or member.create_date
+        if date: date.strftime("%Y-%m-%d")
 
-        Returns: string
-        """
-
-        date = self.member.write_date or self.member.create_date
-        return date.strftime("%Y-%m-%d") if date is not None else None
-
-    @property
-    def patient(self):
-        """Relevant patient
-
-        Returns: namedtuple (Reference)
-        """
-
-        patient = self.member.patient
+        #patient
+        patient = member.patient
         if patient:
-            r = Reference(display=patient.rec_name,
-                            reference='/'.join(['Patient', str(patient.id)]))
-            return r
+            jsondict['patient'] = {'display': patient.rec_name,
+                                    'reference': ''.join(['Patient/', str(patient.id)])}
 
-    @property
-    def relationship(self):
-        """Relationship to patient
-
-        Returns: namedtuple (CodeableConcept)
-        """
-
-        from value_sets import familyMember
-        member = self.member
+        #relationship
+        from .value_sets import familyMember
         if member:
-            cc = CodeableConcept()
-            coding = Coding()
+            cc = {}
+            c = {}
 
             t = {'m': 'maternal', 'f': 'paternal'} #ignore sibling code
             k = ' '.join((t.get(member.xory, ''), member.relative)).strip()
             info = [d for d in familyMember.contents if d['display'] == k]
 
             if info:
-                coding.code = info[0]['code']
-                coding.system = value=info[0]['system']
-            cc.text = coding.display = k
-            cc.coding=[coding]
-            return cc
+                c['code'] = info[0]['code']
+                c['system'] = info[0]['system']
+            cc['text'] = c['display'] = k
+            cc['coding']=[c]
+            jsondict['relationship'] = cc
 
-    @property
-    def condition(self):
-        """Family member's conditions
+        #status
+        #TODO Unknown equivalent in Health
+        jsondict['status'] = 'completed'
 
-        Returns: namedtuple (Condition)
-        """
-
-        path = self.member.name
+        #condition
+        path = member.name
         if path:
-            code = CodeableConcept()
-            coding = Coding(code=path.code,
-                            system='urn:oid:2.16.840.1.113883.6.90') #ICD-10-CM
-            code.text = coding.display = path.name
-            code.coding = coding
-            condition = Condition(code=code)
-            return [condition]
+            code = {}
+            coding = {'code': path.code,
+                    'system': 'urn:oid:2.16.840.1.113883.6.90'} #ICD-10-CM
+            code['text'] = coding['display'] = path.name
+            code['coding'] = [coding]
+            jsondict['condition'] = [{'code': code}]
 
-__all__ = ['familyMemberHistoryAdapter']
+        return jsondict
+
+__all__ = ['FamilyMemberHistory']

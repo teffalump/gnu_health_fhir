@@ -1,251 +1,151 @@
-from .type_definitions import Identifier, Reference, Quantity, vaccinationProtocol, CodeableConcept, Coding, Annotation
+from fhirclient.models import immunization
+from .utils import safe_attrgetter
 
-class immunizationAdapter:
-    """Adapter for immunization resource"""
+class Immunization(immunization.Immunization):
 
-    def __init__(self, vaccination):
-        self.vaccination = vaccination
+    def __init__(self, vaccine):
+        jsondict = self._get_jsondict(vaccine)
+        super(Immunization, self).__init__(jsondict=jsondict)
 
-    @property
-    def identifier(self):
-        """Unique identifiers
+    def _get_jsondict(self, vaccination):
+        jsondict = {}
 
-        Returns: List of namedtuple (Identifier) -- only one supported
-        """
+        #identifier
+        jsondict['identifier'] = [{'use': 'official',
+                                    'value': '-'.join([vaccination.vaccine.rec_name,
+                                                    str(vaccination.id)])}]
+        #date
+        date = vaccination.date
+        if date: jsondict['date'] = date.strftime("%Y-%m-%d")
 
-        i = Identifier(use='official',
-                    value='-'.join([self.vaccination.vaccine.rec_name,
-                                    str(self.vaccination.id)]))
-        return [i]
-
-    @property
-    def date(self):
-        """Administration date
-
-        Returns: string
-        """
-
-        date = self.vaccination.date
-        return date.strftime("%Y-%m-%d") if date is not None else None
-
-    @property
-    def wasNotGiven(self):
-        """Whether immunization was not given or refused
-
-        Returns: string ('true' | 'false')
-        """
+        #notGiven
         #TODO Is there a field for this in Health (?)
+        jsondict['notGiven'] = False
 
-        return 'false'
-
-    @property
-    def status(self):
-        """Vaccination status (in-progress | etc.)
-
-        Returns: string
-        """
-
-        status = self.vaccination.state
+        #status
+        status = vaccination.state
         if status == 'in_progress':
-            return 'in-progress'
+            g = 'in-progress'
         elif status == 'done':
-            return 'completed'
+            g = 'completed'
         else:
-            return None
+            g = None
+        if g: jsondict['status'] = g
 
-    @property
-    def subject(self):
-        """Who was immunized
+        #patient
+        patient = vaccination.name
+        if patient:
+            jsondict['patient'] = {'display': patient.rec_name,
+                                    'reference': ''.join(['Patient/', str(patient.id)])}
 
-        Returns: namedtuple (Reference)
-        """
+        #practitioner
+        practitioner = vaccination.healthprof
+        if practitioner:
+            jsondict['practitioner'] = [{'actor':{'display': practitioner.rec_name,
+                                                    'reference': ''.join(['Practitioner/', str(practitioner.id)])}}]
 
-        subject = self.vaccination.name
-        if subject:
-            r = Reference(display=subject.rec_name,
-                            reference='/'.join(['Patient', str(subject.id)]))
-            return r
+        #lotNumber
+        number = safe_attrgetter(vaccination, 'lot.number')
+        if number: jsondict['lotNumber'] = str(number)
 
-    @property
-    def performer(self):
-        """Who gave it
+        #expirationDate
+        date = safe_attrgetter(vaccination, 'lot.expiration_date')
+        if date: jsondict['expirationDate'] = date.strftime("%Y-%m-%d")
 
-        Returns: namedtuple (Reference)
-        """
-
-        performer = self.vaccination.healthprof
-        if performer:
-            r = Reference(display=performer.rec_name,
-                            reference='/'.join(['Practitioner', str(performer.id)]))
-            return r
-
-    @property
-    def lotNumber(self):
-        """Vaccine lot number
-
-        Returns: string
-        """
-
-        number = self.vaccination.lot.number
-        return str(number) if number is not None else None
-
-    @property
-    def expirationDate(self):
-        """Vaccine expiration date
-
-        Returns: string
-        """
-
-        date = self.vaccination.lot.expiration_date
-        return date.strftime("%Y-%m-%d") if date is not None else None
-
-    @property
-    def doseQuantity(self):
-        """Amount administered
-
-        Returns: namedtuple (Quantity)
-        """
-
-        quantity = self.vaccination.amount
+        #doseQuantity
+        quantity = vaccination.amount
         if quantity is not None:
-            amt = Quantity(value=str(quantity),
-                            unit='mL',
-                            uri='http://snomed.info/sct',
-                            code='258773002')
-            return amt
+            jsondict['doseQuantity'] = {'value': quantity,
+                                        'unit': 'mL',
+                                        'system': 'http://snomed.info/sct',
+                                        'code': '258773002'}
 
-    @property
-    def notes(self):
-        """Misc. notes
-
-        Returns: namedtuple (Annotation)
-        """
-
-        notes = self.vaccination.observations
+        #note
+        notes = vaccination.observations
         if notes:
-            a = Annotation(text=notes)
-            return a
+            jsondict['note'] = {'text': notes}
 
-    @property
-    def reported(self):
-        """Self-reported or not
-
-        Returns: string ('true' or 'false')
-        """
-
-        # If there is no attached administered healthprof,
+        #reportOrigin and primarySource
+        #DEBUG If there is no attached administered healthprof,
         #   AND no reasonable documents then self-reported (?)
-
-        administer = self.vaccination.healthprof
-        asserter = self.vaccination.signed_by
-
+        administer = vaccination.healthprof
+        asserter = vaccination.signed_by
         if administer is None and asserter is None:
-            return 'true'
+            jsondict['reportOrigin']= {'text': 'Self-reported'}
+            jsondict['primarySource'] = False
         else:
-            return 'false'
+            # don't need to populate if primary source per standard
+            # cc = {'text': 'Health professional asserter'}
+            jsondict['primarySource'] = True
 
-    @property
-    def route(self):
-        """How vaccine entered body
-
-        Returns: namedtuple (CodeableConcept)
-        """
-
-        route = self.vaccination.admin_route
-        from value_sets import immunizationRoute
+        #route
+        route = vaccination.admin_route
+        from .value_sets import immunizationRoute
         if route:
-            ir=[i for i in immunizationRoute.contents if i['code'] == route.upper()]
+            ir = [i for i in immunizationRoute.contents if i['code'] == route.upper()]
             if ir:
-                cc = CodeableConcept()
-                c = Coding()
-                c.display = cc.text = ir[0]['display']
-                c.code = ir[0]['code']
-                cc.coding=[c]
-                return cc
+                cc = {}
+                c = {}
+                c['display'] = cc['text'] = ir[0]['display']
+                c['code'] = ir[0]['code']
+                cc['coding']=[c]
+                jsondict['route'] = cc
 
-    @property
-    def site(self):
-        """The body site vaccine was administered
-
-        Returns: namedtuple (CodeableConcept)
-        """
-
-        site = self.vaccination.admin_site
-        from value_sets import immunizationSite
+        #site
+        site = vaccination.admin_site
+        from .value_sets import immunizationSite
         if site:
             m=[i for i in immunizationSite.contents if i['code'] == site.upper()]
             if m:
-                cc = CodeableConcept()
-                coding = Coding()
-                coding.display = cc.text = m[0]['display']
-                coding.code = m[0]['code']
-                cc.coding=[coding]
-                return cc
+                cc = {}
+                c = {}
+                c['display'] = cc['text'] = m[0]['display']
+                c['code'] = m[0]['code']
+                cc['coding'] = [c]
+                jsondict['site'] = cc
 
-    @property
-    def vaccineCode(self):
-        """Vaccine code administered
-
-        Returns: namedtuple (CodeableConcept)
-        """
+        #vaccineCode
         #TODO Need better coding, much better!
-
-        type_ = self.vaccination.vaccine
+        type_ = vaccination.vaccine
         if type_:
-            cc = CodeableConcept()
-            coding = Coding()
-            coding.display = cc.text = type_.rec_name
+            cc = {}
+            c = {}
+            c['display'] = cc['text'] = type_.rec_name
             if type_.name.code:
-                coding.code = type_.name.code
-                cc.coding=[coding]
-            return cc
+                c['code'] = type_.name.code
+                cc['coding']=[c]
+            jsondict['vaccineCode'] = cc
 
-    @property
-    def reaction(self):
-        """Note any reactions from vaccine
+        #reaction
+        #TODO Must be reference in standard, but stored as text
 
-        Returns: namedtuple (reaction)
-        """
-
-        #TODO Must be reference in standard, but stored as text on vaccination model (?!)
-
-        pass
-
-    @property
-    def vaccinationProtocol(self):
-        """The protocol followed
-
-        Returns: List of namedtuple (vaccinationProtocol)
-        """
-
+        #vaccinationProtocol
         #TODO Better vaccine coding/info
-
-        seq = self.vaccination.dose
-        authority = self.vaccination.institution
-        disease = self.vaccination.vaccine.active_component[:1] #Get name of vaccine
-        description = self.vaccination.observations
-
+        seq = vaccination.dose
+        authority = vaccination.institution
+        disease = safe_attrgetter(vaccination, 'vaccine.indications') #DEBUG
+        description = vaccination.observations
         if seq:
-            vp = vaccinationProtocol(doseSequence=seq,
-                                        description=description)
+            vp = {'doseSequence': seq,
+                    'description': description}
 
-            ref = Reference(display=authority.name.rec_name,
-                            reference='/'.join(['Institution', str(authority.id)]))
+            ref = {'display': safe_attrgetter(authority, 'name.rec_name'),
+                    'reference': ''.join(['Institution/', str(authority.id)])}
 
-            target = CodeableConcept(text=disease)
-            coding = Coding(display=disease)
-            target.coding = [coding]
+            target = {'text': disease}
 
             # Unclear if equivalent concept in Health
-            status = CodeableConcept(text='Counts')
-            coding = Coding(code='count',
-                            display='Counts')
-            status.coding = [coding]
+            status = {'text': 'Counts'}
+            # coding = Coding(code='count',
+                            # display='Counts')
+            # status.coding = [coding]
+            vp['doseStatus'] = status
 
-            vp.authority = ref
-            vp.targetDisease = target
-            vp.doseStatus = status
+            vp['authority'] = ref
+            vp['targetDisease'] = [target]
 
-            return [vp]
+            jsondict['vaccinationProtocol'] = [vp]
 
-__all__ = ['immunizationAdapter']
+        return jsondict
+
+__all__ = ['Immunization']

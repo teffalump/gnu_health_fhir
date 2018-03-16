@@ -7,7 +7,7 @@ NAME = 'health_fhir'
 
 # Convert MD to RST
 try:
-    from pypandoc import convert
+    from pypandoc import convert_file
     read_md = lambda f: convert_file(f, 'rst')
 except ImportError:
     print('warning: pypandoc module not found, cannot covert Markdown to RST')

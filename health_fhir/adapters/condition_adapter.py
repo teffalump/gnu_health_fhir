@@ -27,7 +27,19 @@ class Condition(condition.Condition):
         jsondict['assertedDate'] = date.strftime('%Y-%m-%d') if date is not None else None
 
         #note
-        jsondict['note'] = [{'text': condition.short_comment}]
+        # Add comments about specific food allergy here, too
+        allergies = {'da': 'Drug Allergy',
+                     'fa': 'Food Allergy',
+                     'ma': 'Misc Allergy',
+                     'mc': 'Misc Contraindication'}
+        notes = []
+        if condition.allergy_type:
+            notes.append({'text': allergies.get(condition.allergy_type)})
+        if condition.short_comment:
+            notes.append({'text': condition.short_comment})
+        if condition.extra_info:
+            notes.append({'text': condition.extra_info})
+        if notes: jsondict['note'] = notes
 
         #abatementDateTime
         date = condition.healed_date

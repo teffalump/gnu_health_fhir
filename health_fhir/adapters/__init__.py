@@ -7,3 +7,4 @@ from .condition_adapter import *
 from .family_member_history_adapter import *
 from .practitioner_adapter import *
 from .diagnostic_report_adapter import *
+from .encounter_adapter import *

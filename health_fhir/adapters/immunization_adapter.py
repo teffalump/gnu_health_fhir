@@ -3,9 +3,9 @@ from .utils import safe_attrgetter
 
 class Immunization(immunization.Immunization):
 
-    def __init__(self, vaccine):
-        jsondict = self._get_jsondict(vaccine)
-        super(Immunization, self).__init__(jsondict=jsondict)
+    def __init__(self, vaccine, **kwargs):
+        kwargs['jsondict'] = self._get_jsondict(vaccine)
+        super(Immunization, self).__init__(**kwargs)
 
     def _get_jsondict(self, vaccination):
         jsondict = {}

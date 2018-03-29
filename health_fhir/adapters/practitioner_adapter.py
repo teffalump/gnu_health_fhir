@@ -3,9 +3,9 @@ from fhirclient.models import practitioner
 
 class Practitioner(practitioner.Practitioner):
 
-    def __init__(self, practitioner):
-        jsondict = self._get_jsondict(practitioner)
-        super(Practitioner, self).__init__(jsondict=jsondict)
+    def __init__(self, practitioner, **kwargs):
+        kwargs['jsondict'] = self._get_jsondict(practitioner)
+        super(Practitioner, self).__init__(**kwargs)
 
     def _get_jsondict(self, hp):
         jsondict = {}

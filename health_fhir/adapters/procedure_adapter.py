@@ -3,9 +3,9 @@ from fhirclient.models import procedure
 
 class Procedure(procedure.Procedure):
 
-    def __init__(self, procedure):
-        jsondict = self._get_jsondict(procedure)
-        super(Procedure, self).__init__(jsondict=jsondict)
+    def __init__(self, procedure, **kwargs):
+        kwargs['jsondict'] = self._get_jsondict(procedure)
+        super(Procedure, self).__init__(**kwargs)
 
     def _get_jsondict(self, procedure):
         jsondict = {}

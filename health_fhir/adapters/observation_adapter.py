@@ -3,9 +3,9 @@ from fhirclient.models import observation
 
 class Observation(observation.Observation):
 
-    def __init__(self, observation):
-        jsondict = self._get_jsondict(observation)
-        super(Observation, self).__init__(jsondict=jsondict)
+    def __init__(self, observation, **kwargs):
+        kwargs['jsondict'] = self._get_jsondict(observation)
+        super(Observation, self).__init__(**kwargs)
 
     def _get_jsondict(self, observation):
         jsondict = {}

@@ -2,9 +2,9 @@ from fhirclient.models import  familymemberhistory
 
 class FamilyMemberHistory(familymemberhistory.FamilyMemberHistory):
 
-    def __init__(self, member):
-        jsondict = self._get_jsondict(member)
-        super(FamilyMemberHistory, self).__init__(jsondict=jsondict)
+    def __init__(self, member, **kwargs):
+        kwargs['jsondict'] = self._get_jsondict(member)
+        super(FamilyMemberHistory, self).__init__(**kwargs)
 
     def _get_jsondict(self, member):
         #TODO Add more info to family history data model on Health side

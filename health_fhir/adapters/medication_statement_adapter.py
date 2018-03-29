@@ -3,9 +3,9 @@ from fhirclient.models import medicationstatement
 
 class MedicationStatement(medicationstatement.MedicationStatement):
 
-    def __init__(self, med):
-        jsondict = self._get_jsondict(med)
-        super(MedicationStatement, self).__init__(jsondict=jsondict)
+    def __init__(self, med, **kwargs):
+        kwargs['jsondict'] = self._get_jsondict(med)
+        super(MedicationStatement, self).__init__(**kwargs)
 
     def _get_jsondict(self, med):
         jsondict = {}

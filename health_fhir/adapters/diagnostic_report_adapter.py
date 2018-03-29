@@ -3,9 +3,9 @@ from fhirclient.models import diagnosticreport
 
 class DiagnosticReport(diagnosticreport.DiagnosticReport):
 
-    def __init__(self, report):
-        jsondict = self._get_jsondict(report)
-        super(DiagnosticReport, self).__init__(jsondict=jsondict)
+    def __init__(self, report, **kwargs):
+        kwargs['jsondict'] = self._get_jsondict(report)
+        super(DiagnosticReport, self).__init__(**kwargs)
 
     def _get_jsondict(self, report):
         jsondict = {}

@@ -3,9 +3,9 @@ from fhirclient.models import condition
 
 class Condition(condition.Condition):
 
-    def __init__(self, condition):
-        jsondict = self._get_jsondict(condition)
-        super(Condition, self).__init__(jsondict=jsondict)
+    def __init__(self, condition, **kwargs):
+        kwargs['jsondict'] = self._get_jsondict(condition)
+        super(Condition, self).__init__(**kwargs)
 
     def _get_jsondict(self, condition):
         jsondict = {}

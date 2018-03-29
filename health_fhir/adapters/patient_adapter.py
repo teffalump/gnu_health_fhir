@@ -3,12 +3,14 @@ from fhirclient.models import patient
 
 class Patient(patient.Patient):
 
-    def __init__(self, patient):
-        jsondict = self._get_jsondict(patient)
-        super(Patient, self).__init__(jsondict=jsondict)
+    def __init__(self, patient, **kwargs):
+        kwargs['jsondict'] = self._get_jsondict(patient)
+        super(Patient, self).__init__(**kwargs)
 
     def _get_jsondict(self, patient):
         jsondict = {}
+
+        #TODO Add general_info field - where appropriate?
 
         #Identifier
         idents = []

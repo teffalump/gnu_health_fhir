@@ -4,11 +4,13 @@ This package aims to provide a functional FHIR interface to GNU Health data mode
 
 #### Design
 
-The ultimate goal is that for every appropriate FHIR Resource there will be an adapter which subclasses the fhirclient data model. This subclass takes the provided tryton model and imports the data. Basically, this is glue for fhirclient and GNU Health.
+The ultimate goal is that for every appropriate FHIR Resource there will be an adapter which subclasses the fhirclient data model. This subclass takes the provided tryton model and imports all supported data. Basically, this library is glue for fhirclient and GNU Health.
+
+There are plans to extend some of the resources to better approximate the GNU Health data schemes. The FHIR specification and GNU Health storage format rarely overlap, many times requiring significant data contortions. This is an ongoing process and there is a decided lack of motivation to do too much heavy-lifting, consequently these 'hacks' should be kept to a minimum.
 
 #### Resources
 
-Currently, the package supports these FHIR resources:
+Currently, the package at least partially supports these FHIR resources:
 
 - Patient
 - Practitioner
@@ -19,8 +21,9 @@ Currently, the package supports these FHIR resources:
 - MedicationStatement
 - FamilyMemberHistory
 - Procedure
+- Encounter
 
-Not every element is supported for each resource, nor will this be the goal. For example, some of the elements have no equivalent in GNU Health.
+Not every element is currently supported for each resource, nor will this be the goal. Some of the elements have no equivalent in GNU Health, some do not apply, while some are undesirable, and so on. The resources are still under active development with new element support added intermittently.
 
 #### Usage
 

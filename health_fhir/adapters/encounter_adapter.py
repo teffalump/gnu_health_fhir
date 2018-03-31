@@ -97,10 +97,17 @@ class Encounter(encounter.Encounter):
                 jsondict['period']['end'] = enc.evaluation_endtime.strftime(TIME_FORMAT)
 
         #Length
-        #TODO
+        #timedelta object
+        #Use minutes
         if enc.evaluation_length:
-            pass
+            jsondict['length'] = {'code': 'min', 'value': enc.evaluation_length.seconds // 60,
+                                    'unit': 'minute', 'system': 'http://unitsofmeasure.org'}
+
+        #Reason
+        #diagnosis, related_condition, secondary_conditions
+        #TODO
 
         return jsondict
+
 
 __all__=['Encounter']

@@ -22,6 +22,7 @@ Currently, the package at least partially supports these FHIR resources:
 - FamilyMemberHistory
 - Procedure
 - Encounter
+- ClinicalImpression
 
 Not every element is currently supported for each resource, nor will this be the goal. Some of the elements have no equivalent in GNU Health, some do not apply, while some are undesirable, and so on. The resources are still under active development with new element support added intermittently.
 

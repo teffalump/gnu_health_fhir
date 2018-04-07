@@ -1,8 +1,12 @@
 from .utils import safe_attrgetter, TIME_FORMAT
 from fhirclient.models import encounter
 
+__all__=['Encounter']
+
 class Encounter(encounter.Encounter):
-    """In GNU Health, `encounters` are patient evaluations
+    """In GNU Health, `encounters` are patient evaluations, or at least part of that model.
+
+    We shall add the more clinical data to a ClinicalImpression attached to the encounter
     """
 
     def __init__(self, enc, **kwargs):
@@ -103,11 +107,22 @@ class Encounter(encounter.Encounter):
             jsondict['length'] = {'code': 'min', 'value': enc.evaluation_length.seconds // 60,
                                     'unit': 'minute', 'system': 'http://unitsofmeasure.org'}
 
-        #Reason
+        #Diagnosis/Reason
+        #TODO better information, add note to Condition reference
         #diagnosis, related_condition, secondary_conditions
-        #TODO
+        diags, temp = [], False
+        if enc.diagnosis:
+            diags.append({'rank': 1, 'condition': {'display': enc.diagnosis.name}})
+        if enc.related_condition:
+            #This is set for a followup appt - consequently add this to reason, too
+            cond ={'display': enc.related_condition.pathology.name,
+                    'reference': ''.join(['Condition/', str(enc.related_condition.id)])}
+            diags.append({'rank': 2,
+                            'condition': cond})
+            jsondict['reason'] = [{'text': cond['display']}]
+            temp  = True
+        for x,y in enumerate(enc.secondary_conditions, start=3 if temp else 2):
+            diags.append({'rank': x, 'condition': {'display': y.pathology.name}})
+        if diags: jsondict['diagnosis'] = diags
 
         return jsondict
-
-
-__all__=['Encounter']

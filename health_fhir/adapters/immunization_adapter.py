@@ -1,6 +1,8 @@
 from fhirclient.models import immunization
 from .utils import safe_attrgetter
 
+__all__ = ['Immunization']
+
 class Immunization(immunization.Immunization):
 
     def __init__(self, vaccine, **kwargs):
@@ -147,5 +149,3 @@ class Immunization(immunization.Immunization):
             jsondict['vaccinationProtocol'] = [vp]
 
         return jsondict
-
-__all__ = ['Immunization']

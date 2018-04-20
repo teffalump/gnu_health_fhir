@@ -53,6 +53,10 @@ class ClinicalImpression(clinicalimpression.ClinicalImpression):
             else:
                 jsondict['effectiveDateTime'] = start
 
+        #assessor
+        if note.healthprof: jsondict['assessor'] = {'display': note.healthprof.rec_name,
+                                                        'reference': ''.join(['Practitioner/', str(note.healthprof.id)])}
+
         #date - time recorded
         last = note.write_date or note.evaluation_start
         jsondict['date'] = last.strftime(TIME_FORMAT)
@@ -60,7 +64,7 @@ class ClinicalImpression(clinicalimpression.ClinicalImpression):
         #Shove Objective in here - evaluation_summary
         #Shove HPI in here - present_illness + chief_complaint
         #Shove Plan in here - directions
-        jsondict['summary']= 'CC: %s\nHPI: %s\nObjective: %s\nPlan: %s' % tuple(safe_attrgetter(note, 'chief_complaint', 'present_illness', 'evaluation_summary', 'directions', default=''))
+        jsondict['summary'] = 'CC: {}\n\nHPI: {}\n\nObjective: {}\n\nPlan: {}'.format(*safe_attrgetter(note, 'chief_complaint', 'present_illness', 'evaluation_summary', 'directions', default=''))
 
         #Other misc garbage
         # extras = [{'text': x} for x in safe_attrgetter(note, 'notes', 'notes_complaint', 'info_diagnosis', default='') if x.strip()]

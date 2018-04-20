@@ -1,5 +1,7 @@
 from fhirclient.models import  familymemberhistory
 
+__all__ = ['FamilyMemberHistory']
+
 class FamilyMemberHistory(familymemberhistory.FamilyMemberHistory):
 
     def __init__(self, member, **kwargs):
@@ -84,5 +86,3 @@ class FamilyMemberHistory(familymemberhistory.FamilyMemberHistory):
             jsondict['condition'] = [{'code': code}]
 
         return jsondict
-
-__all__ = ['FamilyMemberHistory']

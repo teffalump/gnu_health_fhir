@@ -1,6 +1,8 @@
 from .utils import TIME_FORMAT
 from fhirclient.models import condition
 
+__all__ = ['Condition']
+
 class Condition(condition.Condition):
 
     def __init__(self, condition, **kwargs):
@@ -76,5 +78,3 @@ class Condition(condition.Condition):
             jsondict['code'] = cc
 
         return jsondict
-
-__all__ = ['Condition']

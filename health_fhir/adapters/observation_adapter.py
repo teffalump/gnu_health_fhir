@@ -1,6 +1,8 @@
 from .utils import TIME_FORMAT, safe_attrgetter
 from fhirclient.models import observation
 
+__all__=['Observation']
+
 class Observation(observation.Observation):
 
     def __init__(self, observation, **kwargs):
@@ -117,5 +119,3 @@ class Observation(observation.Observation):
         if t: jsondict['effectiveDateTime'] = t.strftime(TIME_FORMAT)
 
         return jsondict
-
-__all__=['Observation']

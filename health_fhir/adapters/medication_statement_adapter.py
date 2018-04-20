@@ -1,6 +1,8 @@
 from .utils import TIME_FORMAT, safe_attrgetter
 from fhirclient.models import medicationstatement
 
+__all__ = ['MedicationStatement']
+
 class MedicationStatement(medicationstatement.MedicationStatement):
 
     def __init__(self, med, **kwargs):
@@ -156,5 +158,3 @@ class MedicationStatement(medicationstatement.MedicationStatement):
         jsondict['medicationCodeableConcept'] = {'text': med.medicament.rec_name}
 
         return jsondict
-
-__all__ = ['MedicationStatement']

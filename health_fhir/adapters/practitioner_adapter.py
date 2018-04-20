@@ -1,6 +1,8 @@
 from operator import attrgetter
 from fhirclient.models import practitioner
 
+__all__=['Practitioner']
+
 class Practitioner(practitioner.Practitioner):
 
     def __init__(self, practitioner, **kwargs):
@@ -112,5 +114,3 @@ class Practitioner(practitioner.Practitioner):
                                 # managingOrganization=organization)
 
         return jsondict
-
-__all__=['Practitioner']

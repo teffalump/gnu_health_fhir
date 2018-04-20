@@ -1,6 +1,8 @@
 from .utils import safe_attrgetter, TIME_FORMAT
 from fhirclient.models import diagnosticreport
 
+__all__ = ['DiagnosticReport']
+
 class DiagnosticReport(diagnosticreport.DiagnosticReport):
 
     def __init__(self, report, **kwargs):
@@ -76,5 +78,3 @@ class DiagnosticReport(diagnosticreport.DiagnosticReport):
         jsondict['conclusion'] = report.results or report.diagnosis
 
         return jsondict
-
-__all__ = ['DiagnosticReport']

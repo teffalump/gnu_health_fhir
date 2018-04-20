@@ -1,6 +1,8 @@
 from .utils import safe_attrgetter, TIME_FORMAT
 from fhirclient.models import procedure
 
+__all__ = ['Procedure']
+
 class Procedure(procedure.Procedure):
 
     def __init__(self, procedure, **kwargs):
@@ -117,5 +119,3 @@ class Procedure(procedure.Procedure):
         #TODO Use procedure.name.supplies
 
         return jsondict
-
-__all__ = ['Procedure']

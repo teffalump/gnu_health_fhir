@@ -1,6 +1,8 @@
 from .utils import safe_attrgetter, TIME_FORMAT
 from fhirclient.models import patient
 
+__all__ = ['Patient']
+
 class Patient(patient.Patient):
 
     def __init__(self, patient, **kwargs):
@@ -195,5 +197,3 @@ class Patient(patient.Patient):
 
         #Return the dict
         return jsondict
-
-__all__ = ['Patient']

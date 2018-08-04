@@ -1,4 +1,4 @@
-from .utils import TIME_FORMAT
+from pendulum import instance
 from fhirclient.models import condition
 
 __all__ = ['Condition']
@@ -25,8 +25,8 @@ class Condition(condition.Condition):
                                 'reference': ''.join(['Practitioner/', str(asserter.id)])}
 
         #assertedDate
-        date = condition.diagnosed_date
-        jsondict['assertedDate'] = date.strftime('%Y-%m-%d') if date is not None else None
+        if condition.diagnosed_date:
+            jsondict['assertedDate'] = instance(condition.diagnosed_date).to_iso8601_string()
 
         #note
         # Add comments about specific food allergy here, too
@@ -44,8 +44,8 @@ class Condition(condition.Condition):
         if notes: jsondict['note'] = notes
 
         #abatementDateTime
-        date = condition.healed_date
-        jsondict['abatementDateTime'] = date.strftime(TIME_FORMAT) if date is not None else None
+        if condition.healed_date:
+            jsondict['abatementDateTime'] = instance(condition.healed_date).to_iso8601_string()
 
         #verificationStatus
         # TODO No corresponding Health equivalent (I think?)

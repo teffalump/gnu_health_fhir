@@ -1,4 +1,5 @@
 from fhirclient.models import immunization
+from pendulum import instance
 from .utils import safe_attrgetter
 
 __all__ = ['Immunization']
@@ -18,7 +19,7 @@ class Immunization(immunization.Immunization):
                                                     str(vaccination.id)])}]
         #date
         date = vaccination.date
-        if date: jsondict['date'] = date.strftime("%Y-%m-%d")
+        if date: jsondict['date'] = instance(date).to_iso8601_string()
 
         #notGiven
         #TODO Is there a field for this in Health (?)
@@ -52,7 +53,7 @@ class Immunization(immunization.Immunization):
 
         #expirationDate
         date = safe_attrgetter(vaccination, 'lot.expiration_date')
-        if date: jsondict['expirationDate'] = date.strftime("%Y-%m-%d")
+        if date: jsondict['expirationDate'] = instance(date).to_iso8601_string()
 
         #doseQuantity
         quantity = vaccination.amount

@@ -1,4 +1,5 @@
-from .utils import safe_attrgetter, TIME_FORMAT
+from .utils import safe_attrgetter
+from pendulum import instance
 from fhirclient.models import patient
 
 __all__ = ['Patient']
@@ -38,11 +39,14 @@ class Patient(patient.Patient):
         for name in patient.name.person_names:
             n = {}
             n['given'] = [x for x in name.given.split()]
-            n['family'] = name.family
+            n['family'] = name.family if name.family else '<unknown>'
             n['prefix'] = [name.prefix] if name.prefix else []
             n['suffix'] = [name.suffix] if name.suffix else []
-            n['use'] = name.use
-            n['period'] = {'start': name.date_from, 'end':name.date_to} #DEBUG Date to string conversion
+            n['use'] = name.use if name.use else '<unknown>'
+            if name.date_from:
+                n['period'] = {'start': instance(name.date_from).to_iso8601_string()}
+                if name.date_to:
+                    n['period']['end'] = instance(name.date_to).to_iso8601_string()
             names.append(n)
 
         if names:
@@ -85,16 +89,16 @@ class Patient(patient.Patient):
 
         #birthDate
         dob = patient.name.dob
-        jsondict['birthDate'] = dob.strftime("%Y-%m-%d") if dob is not None else None
+        if dob:
+            jsondict['birthDate'] = instance(dob).to_iso8601_string()
 
         #deceasedBoolean
         jsondict['deceasedBoolean'] = patient.deceased
 
         #deceasedDateTime
-        #TODO Figure out timezone/proper formatting
-
         dod = patient.dod
-        jsondict['deceasedDateTime'] = dod.strftime(TIME_FORMAT) if dod is not None else None
+        if dod:
+            jsondict['deceasedDateTime'] = instance(dod).to_iso8601_string()
 
         #address
         #Only one currently

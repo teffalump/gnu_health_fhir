@@ -1,4 +1,5 @@
-from .utils import safe_attrgetter, TIME_FORMAT
+from .utils import safe_attrgetter
+from pendulum import instance
 from fhirclient.models import procedure
 
 __all__ = ['Procedure']
@@ -101,9 +102,9 @@ class Procedure(procedure.Procedure):
         #performedPeriod
         start, end = safe_attrgetter(procedure, 'name.surgery_date', 'name.surgery_end_date')
         if start is not None:
-            p = {'start': start.strftime(TIME_FORMAT)}
+            p = {'start': instance(start).to_iso8601_string()}
             if end is not None:
-                p['end'] = end.strftime(TIME_FORMAT)
+                p['end'] = instance(end).to_iso8601_string()
             jsondict['performedPeriod'] = p
 
         #location

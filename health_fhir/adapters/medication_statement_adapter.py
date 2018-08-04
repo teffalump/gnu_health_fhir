@@ -1,4 +1,5 @@
-from .utils import TIME_FORMAT, safe_attrgetter
+from .utils import safe_attrgetter
+from pendulum import instance
 from fhirclient.models import medicationstatement
 
 __all__ = ['MedicationStatement']
@@ -25,9 +26,10 @@ class MedicationStatement(medicationstatement.MedicationStatement):
         #TODO
         #informationSource #See if we can determine this in Health?
 
-        #dateAsserted - Use create/write date?
+        #date?
         date = med.create_date
-        jsondict['dateAsserted'] = date.strftime('%Y-%m-%d')
+        if date:
+            jsondict['dateAsserted'] = instance(date).to_iso8601_string()
 
 
         #status
@@ -145,9 +147,9 @@ class MedicationStatement(medicationstatement.MedicationStatement):
         #effectivePeriod
         start, end = med.start_treatment, med.end_treatment
         if start:
-            p = {'start': start.strftime(TIME_FORMAT)}
+            p = {'start': instance(start).to_iso8601_string()}
             if end:
-                p['end'] = end.strftime(TIME_FORMAT)
+                p['end'] = instance(end).to_iso8601_string()
             jsondict['effectivePeriod'] = p
 
         #note

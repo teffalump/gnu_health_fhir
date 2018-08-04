@@ -24,7 +24,7 @@ Currently, the package at least partially supports these FHIR resources:
 - Encounter
 - ClinicalImpression
 
-Not every element is currently supported for each resource, nor will this be the goal. Some of the elements have no equivalent in GNU Health, some do not apply, while some are undesirable, and so on. The resources are still under active development with new element support added intermittently.
+Not every resource's element is currently supported. Some of the elements have no equivalent in GNU Health, do not apply, have not reached maturity, or are undesirable in other ways. The FHIR resources are still under active development which makes them a moving target. The goal is to support all the reasonable, appropriate elements.
 
 #### Usage
 
@@ -46,5 +46,9 @@ The easiest example is to use Proteus with this package:
     patient = Patient(first_patient)
 
     #Now you can use the data just like in fhirclient
-    print(patient.as_json()) #print FHIR JSON data
-    <other fhirclient stuff>
+    print(patient.as_json()) #print as JSON
+
+#### Libraries used
+
+- fhirclient (core FHIR data classes)
+- pendulum (sane datetimes)

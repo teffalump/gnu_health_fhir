@@ -1,4 +1,5 @@
-from .utils import safe_attrgetter, TIME_FORMAT
+from .utils import safe_attrgetter
+from pendulum import instance
 from fhirclient.models import encounter
 
 __all__=['Encounter']
@@ -96,9 +97,9 @@ class Encounter(encounter.Encounter):
 
         #Period
         if enc.evaluation_start:
-            jsondict['period'] = {'start': enc.evaluation_start.strftime(TIME_FORMAT)}
+            jsondict['period'] = {'start': instance(enc.evaluation_start).to_is8601_string()}
             if enc.evaluation_endtime:
-                jsondict['period']['end'] = enc.evaluation_endtime.strftime(TIME_FORMAT)
+                jsondict['period']['end'] = instance(enc.evaluation_endtime).to_is8601_string()
 
         #Length
         #timedelta object

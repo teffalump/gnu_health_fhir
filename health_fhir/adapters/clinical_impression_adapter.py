@@ -1,4 +1,5 @@
-from .utils import safe_attrgetter, TIME_FORMAT
+from .utils import safe_attrgetter
+from pendulum import instance
 from fhirclient.models import clinicalimpression 
 
 __all__=['ClinicalImpression']
@@ -46,9 +47,9 @@ class ClinicalImpression(clinicalimpression.ClinicalImpression):
                                     'reference': ''.join(['Patient/', str(note.patient.id)])}
         #effectiveDateTime - time of assessment
         if note.evaluation_start:
-            start = note.evaluation_start.strftime(TIME_FORMAT)
+            start = instance(note.evaluation_start).to_iso8601_string()
             if note.evaluation_endtime:
-                end = note.evaluation_endtime.strftime(TIME_FORMAT)
+                end = instance(note.evaluation_endtime).to_iso8601_string()
                 jsondict['effectivePeriod'] = {'start': start, 'end': end}
             else:
                 jsondict['effectiveDateTime'] = start
@@ -59,7 +60,7 @@ class ClinicalImpression(clinicalimpression.ClinicalImpression):
 
         #date - time recorded
         last = note.write_date or note.evaluation_start
-        jsondict['date'] = last.strftime(TIME_FORMAT)
+        jsondict['date'] = instance(last).to_iso8601_string()
 
         #Shove Objective in here - evaluation_summary
         #Shove HPI in here - present_illness + chief_complaint

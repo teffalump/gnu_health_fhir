@@ -1,4 +1,5 @@
-from .utils import safe_attrgetter, TIME_FORMAT
+from .utils import safe_attrgetter
+from pendulum import instance
 from fhirclient.models import diagnosticreport
 
 __all__ = ['DiagnosticReport']
@@ -18,7 +19,7 @@ class DiagnosticReport(diagnosticreport.DiagnosticReport):
 
         #effectiveDateTime
         t = report.date_analysis
-        if t: jsondict['effectiveDateTime'] = t.strftime(TIME_FORMAT)
+        if t: jsondict['effectiveDateTime'] = instance(t).to_is8601_string()
 
         #identifier
         #TODO Return more information
@@ -39,7 +40,7 @@ class DiagnosticReport(diagnosticreport.DiagnosticReport):
                                             'code': test.code}]}
         #issued
         t = report.write_date
-        if t: jsondict['issued'] = t.strftime(TIME_FORMAT)
+        if t: jsondict['issued'] = instance(t).to_is8601_string()
 
         #result
         #TODO output actual observations, not links

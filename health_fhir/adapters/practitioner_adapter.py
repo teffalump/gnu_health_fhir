@@ -1,4 +1,5 @@
 from operator import attrgetter
+from pendulum import instance
 from fhirclient.models import practitioner
 
 __all__=['Practitioner']
@@ -40,7 +41,10 @@ class Practitioner(practitioner.Practitioner):
             n['prefix'] = [name.prefix] if name.prefix else []
             n['suffix'] = [name.suffix] if name.suffix else []
             n['use'] = name.use
-            n['period'] = {'start': name.date_from, 'end': name.date_to} #DEBUG Date to string conversion
+            if name.date_from:
+                n['period'] = {'start': instance(name.date_from).to_iso8601_string()}
+                if name.date_to:
+                    n['period']['end'] = instance(name.date_to).to_iso8601_string()
             names.append(n)
         if names:
             jsondict['name'] = names

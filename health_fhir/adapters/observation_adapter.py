@@ -1,4 +1,5 @@
-from .utils import TIME_FORMAT, safe_attrgetter
+from .utils import safe_attrgetter
+from pendulum import instance
 from fhirclient.models import observation
 
 __all__=['Observation']
@@ -47,7 +48,7 @@ class Observation(observation.Observation):
 
         #issued
         issued = observation.write_date or observation.create_date
-        if issued: jsondict['issued']= issued.strftime(TIME_FORMAT)
+        if issued: jsondict['issued'] = instance(issued).to_iso8601_string()
 
         #code
         #TODO Better coding!!
@@ -116,6 +117,6 @@ class Observation(observation.Observation):
 
         #effectiveDateTime
         t = safe_attrgetter(observation, 'gnuhealth_lab_id.date_analysis')
-        if t: jsondict['effectiveDateTime'] = t.strftime(TIME_FORMAT)
+        if t: jsondict['effectiveDateTime'] = instance(t).to_iso8601_string()
 
         return jsondict

@@ -1,4 +1,5 @@
 from fhirclient.models import  familymemberhistory
+from pendulum import instance
 
 __all__ = ['FamilyMemberHistory']
 
@@ -46,7 +47,7 @@ class FamilyMemberHistory(familymemberhistory.FamilyMemberHistory):
 
         #date
         date = member.write_date or member.create_date
-        if date: date.strftime("%Y-%m-%d")
+        if date: instance(date).to_iso8601_string()
 
         #patient
         patient = member.patient

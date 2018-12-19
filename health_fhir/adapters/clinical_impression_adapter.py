@@ -67,6 +67,9 @@ class ClinicalImpression(clinicalimpression.ClinicalImpression):
         #Shove Plan in here - directions
         jsondict['summary'] = 'CC: {}\n\nHPI: {}\n\nObjective: {}\n\nPlan: {}'.format(*safe_attrgetter(note, 'chief_complaint', 'present_illness', 'evaluation_summary', 'directions', default=''))
 
+        #investigation - put all the s/s, pe findings there
+        clinical_findings = {'code': {'text': 'Clinical findings'}}
+
         #Other misc garbage
         # extras = [{'text': x} for x in safe_attrgetter(note, 'notes', 'notes_complaint', 'info_diagnosis', default='') if x.strip()]
         # if extras: jsondict['note'] = extras

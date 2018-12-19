@@ -1,2 +1,10 @@
 tests/*
 .*~
+*.pyc
+build/
+dist/
+.pytest*
+*egg*
+log
+test_env/
+*.bak

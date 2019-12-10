@@ -1,34 +1,50 @@
 from .utils import safe_attrgetter
 from pendulum import instance
-from fhirclient.models import procedure
+from fhirclient.models.procedure import Procedure as fhir_procedure
+from .base import BaseAdapter
 
 __all__ = ["Procedure"]
 
 
-class Procedure(procedure.Procedure):
-    def __init__(self, procedure, **kwargs):
-        kwargs["jsondict"] = self._get_jsondict(procedure)
-        super(Procedure, self).__init__(**kwargs)
+class Procedure(BaseAdapter):
 
-    def _get_jsondict(self, procedure):
+    @classmethod
+    def to_fhir_object(cls, procedure):
+        # TODO category
+        # TODO usedCode Use procedure.name.supplies
+        # TODO location - room = procedure.name.operating_room
         jsondict = {}
+        jsondict["identifier"] = cls.build_fhir_identifier(procedure)
+        jsondict["subject"] = cls.build_fhir_subject(procedure)
+        jsondict["status"] = cls.build_fhir_status(procedure)
+        jsondict["code"] = cls.build_fhir_code(procedure)
+        jsondict["notDone"] = cls.build_fhir_not_done(procedure)
+        jsondict["reasonCode"] = cls.build_fhir_reason_code(procedure)
+        jsondict["performer"] = cls.build_fhir_performer(procedure)
+        jsondict["performedPeriod"] = cls.build_fhir_performed_period(procedure)
+        jsondict["note"] = cls.build_fhir_note(procedure)
+        return fhir_procedure(jsondict=jsondict)
 
-        # identifier
-        i = {
+    @classmethod
+    def build_fhir_identifier(cls, procedure):
+        return [{
             "use": "official",
             "value": "-".join([procedure.procedure.name, str(procedure.id)]),
-        }
-        jsondict["identifier"] = [i]
+        }]
 
-        # subject
-        subject = procedure.name.patient
-        if subject:
-            jsondict["subject"] = {
+    @classmethod
+    def build_fhir_subject(cls, procedure):
+        try:
+            subject = procedure.name.patient
+            return {
                 "display": subject.name.rec_name,
                 "reference": "".join(["Patient/", str(subject.id)]),
             }
+        except:
+            return None
 
-        # status
+    @classmethod
+    def build_fhir_status(cls, procedure):
         state = procedure.name.state
         s = None
         if state == "in_progress":
@@ -41,12 +57,10 @@ class Procedure(procedure.Procedure):
             s = "scheduled"
         else:
             s = "entered-in-error"
-        jsondict["status"] = s
+        return s
 
-        # category
-        # TODO
-
-        # code
+    @classmethod
+    def build_fhir_code(cls, procedure):
         cc = {}
         c = {
             "userSelected": False,
@@ -54,14 +68,16 @@ class Procedure(procedure.Procedure):
             "code": procedure.procedure.name,
         }  # ICD-10-PCS
         cc["text"] = c["display"] = procedure.procedure.description.capitalize()
-
         cc["coding"] = [c]
-        jsondict["code"] = cc
+        return cc
 
-        # notDone
-        jsondict["notDone"] = False  # There is no Health equivalent (I think?)
+    @classmethod
+    def build_fhir_not_done(cls, procedure):
+        # There is no Health equivalent (I think?)
+        return False
 
-        # reasonCode
+    @classmethod
+    def build_fhir_reason_code(cls, procedure):
         code = procedure.name.pathology
         if code:
             cc = {"text": code.name}
@@ -71,9 +87,10 @@ class Procedure(procedure.Procedure):
                 "display": code.name,
             }
             cc["coding"] = [coding]
-            jsondict["reasonCode"] = [cc]
+            return [cc]
 
-        # performer
+    @classmethod
+    def build_fhir_performer(cls, procedure):
         actors = []
         surgeon = procedure.name.surgeon
         if surgeon:
@@ -123,29 +140,20 @@ class Procedure(procedure.Procedure):
                 )
                 role = {"text": name, "coding": [{"code": code, "display": name}]}
             actors.append({"actor": ref, "role": role or None})
-        if actors:
-            jsondict["performer"] = actors
-
-        # performedPeriod
+        return actors
+        
+    @classmethod
+    def build_fhir_performed_period(cls, procedure):
         start, end = safe_attrgetter(
             procedure, "name.surgery_date", "name.surgery_end_date"
         )
         if start is not None:
-            p = {"start": instance(start).to_iso8601_string()}
+            period = {"start": instance(start).to_iso8601_string()}
             if end is not None:
-                p["end"] = instance(end).to_iso8601_string()
-            jsondict["performedPeriod"] = p
-
-        # location
-        # room = procedure.name.operating_room
-        # (display=room.rec_name,
-        # reference='/'.join(['Location', str(room.id)]))
-
-        # note
+                period["end"] = instance(end).to_iso8601_string()
+            return period
+        
+    @classmethod
+    def build_fhir_note(cls, procedure):
         if procedure.name.extra_info:
-            jsondict["note"] = [{"text": procedure.name.extra_info}]
-
-        # usedCode
-        # TODO Use procedure.name.supplies
-
-        return jsondict
+            return [{"text": procedure.name.extra_info}]

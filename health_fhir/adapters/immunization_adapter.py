@@ -1,35 +1,56 @@
-from fhirclient.models import immunization
+from fhirclient.models.immunization import Immunization as fhir_immunization
 from pendulum import instance
+from .base import BaseAdapter
 from .utils import safe_attrgetter
+from ..value_sets import immunizationRoute, immunizationSite
 
 __all__ = ["Immunization"]
 
 
-class Immunization(immunization.Immunization):
-    def __init__(self, vaccine, **kwargs):
-        kwargs["jsondict"] = self._get_jsondict(vaccine)
-        super(Immunization, self).__init__(**kwargs)
+class Immunization(BaseAdapter):
 
-    def _get_jsondict(self, vaccination):
+    @classmethod
+    def to_fhir_object(cls, vaccination):
+        # TODO reaction - Must be reference in standard, but stored as text
         jsondict = {}
+        jsondict["identifier"] = cls.build_fhir_identifier(vaccination)
+        jsondict["date"] = cls.build_fhir_date(vaccination)
+        jsondict["notGiven"] = cls.build_fhir_not_given(vaccination)
+        jsondict["status"] = cls.build_fhir_status(vaccination)
+        jsondict["patient"] = cls.build_fhir_status(vaccination)
+        jsondict["practitioner"] = cls.build_fhir_practitioner(vaccination)
+        jsondict["lotNumber"] = cls.build_fhir_lot_number(vaccination)
+        jsondict["expirationDate"] = cls.build_fhir_expiration_date(vaccination)
+        jsondict["doseQuantity"] = cls.build_fhir_dose_quantity(vaccination)
+        jsondict["note"] = cls.build_fhir_note(vaccination)
+        jsondict["route"] = cls.build_fhir_route(vaccination)
+        jsondict["site"] = cls.build_fhir_site(vaccination)
+        jsondict["vaccineCode"] = cls.build_fhir_vaccine_code(vaccination)
+        jsondict["vaccinationProtocol"] = cls.build_fhir_vaccination_protocol(vaccination)
+        return fhir_immunization(jsondict=jsondict)
 
-        # identifier
-        jsondict["identifier"] = [
+    @classmethod
+    def build_fhir_identifier(cls, vaccination):
+       return [
             {
                 "use": "official",
                 "value": "-".join([vaccination.vaccine.rec_name, str(vaccination.id)]),
             }
         ]
-        # date
+
+    @classmethod
+    def build_fhir_date(cls, vaccination):
         date = vaccination.date
         if date:
-            jsondict["date"] = instance(date).to_iso8601_string()
+            return instance(date).to_iso8601_string()
 
-        # notGiven
+    @classmethod
+    def build_fhir_not_given(cls, vaccination):
         # TODO Is there a field for this in Health (?)
-        jsondict["notGiven"] = False
+        return False
 
-        # status
+    @classmethod
+    def build_fhir_status(cls, vaccination):
         status = vaccination.state
         if status == "in_progress":
             g = "in-progress"
@@ -37,21 +58,22 @@ class Immunization(immunization.Immunization):
             g = "completed"
         else:
             g = None
-        if g:
-            jsondict["status"] = g
+        return g
 
-        # patient
+    @classmethod
+    def build_fhir_patient(cls, vaccination):
         patient = vaccination.name
         if patient:
-            jsondict["patient"] = {
+            return {
                 "display": patient.rec_name,
                 "reference": "".join(["Patient/", str(patient.id)]),
             }
 
-        # practitioner
+    @classmethod
+    def build_fhir_practitioner(cls, vaccination):
         practitioner = vaccination.healthprof
         if practitioner:
-            jsondict["practitioner"] = [
+            return [
                 {
                     "actor": {
                         "display": practitioner.rec_name,
@@ -60,30 +82,34 @@ class Immunization(immunization.Immunization):
                 }
             ]
 
-        # lotNumber
+    @classmethod
+    def build_fhir_lot_number(cls, vaccination):
         number = safe_attrgetter(vaccination, "lot.number")
         if number:
-            jsondict["lotNumber"] = str(number)
+            return str(number)
 
-        # expirationDate
+    @classmethod
+    def build_fhir_expiration_date(cls, vaccination):
         date = safe_attrgetter(vaccination, "lot.expiration_date")
         if date:
-            jsondict["expirationDate"] = instance(date).to_iso8601_string()
+            return instance(date).to_iso8601_string()
 
-        # doseQuantity
+    @classmethod
+    def build_fhir_dose_quantity(cls, vaccination):
         quantity = vaccination.amount
         if quantity is not None:
-            jsondict["doseQuantity"] = {
+            return {
                 "value": quantity,
                 "unit": "mL",
                 "system": "http://snomed.info/sct",
                 "code": "258773002",
             }
 
-        # note
+    @classmethod
+    def build_fhir_note(cls, vaccination):
         notes = vaccination.observations
         if notes:
-            jsondict["note"] = {"text": notes}
+            return {"text": notes}
 
         # reportOrigin and primarySource
         # DEBUG If there is no attached administered healthprof,
@@ -98,9 +124,9 @@ class Immunization(immunization.Immunization):
             # cc = {'text': 'Health professional asserter'}
             jsondict["primarySource"] = True
 
-        # route
+    @classmethod
+    def build_fhir_route(cls, vaccination):
         route = vaccination.admin_route
-        from .value_sets import immunizationRoute
 
         if route:
             ir = [i for i in immunizationRoute.contents if i["code"] == route.upper()]
@@ -110,12 +136,11 @@ class Immunization(immunization.Immunization):
                 c["display"] = cc["text"] = ir[0]["display"]
                 c["code"] = ir[0]["code"]
                 cc["coding"] = [c]
-                jsondict["route"] = cc
+                return cc
 
-        # site
+    @classmethod
+    def build_fhir_site(cls, vaccination):
         site = vaccination.admin_site
-        from .value_sets import immunizationSite
-
         if site:
             m = [i for i in immunizationSite.contents if i["code"] == site.upper()]
             if m:
@@ -124,9 +149,10 @@ class Immunization(immunization.Immunization):
                 c["display"] = cc["text"] = m[0]["display"]
                 c["code"] = m[0]["code"]
                 cc["coding"] = [c]
-                jsondict["site"] = cc
+                return cc
 
-        # vaccineCode
+    @classmethod
+    def build_fhir_vaccine_code(cls, vaccination):
         # TODO Need better coding, much better!
         type_ = vaccination.vaccine
         if type_:
@@ -136,12 +162,11 @@ class Immunization(immunization.Immunization):
             if type_.name.code:
                 c["code"] = type_.name.code
                 cc["coding"] = [c]
-            jsondict["vaccineCode"] = cc
+            return cc
 
-        # reaction
-        # TODO Must be reference in standard, but stored as text
 
-        # vaccinationProtocol
+    @classmethod
+    def build_fhir_vaccination_protocol(cls, vaccination):
         # TODO Better vaccine coding/info
         seq = vaccination.dose
         authority = vaccination.institution
@@ -163,10 +188,6 @@ class Immunization(immunization.Immunization):
             # display='Counts')
             # status.coding = [coding]
             vp["doseStatus"] = status
-
             vp["authority"] = ref
             vp["targetDisease"] = [target]
-
-            jsondict["vaccinationProtocol"] = [vp]
-
-        return jsondict
+            return [vp]

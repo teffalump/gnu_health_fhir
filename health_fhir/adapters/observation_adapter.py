@@ -1,30 +1,45 @@
 from .utils import safe_attrgetter
 from pendulum import instance
-from fhirclient.models import observation
+from fhirclient.models.observation import Observation as fhir_observation
+from .base import BaseAdapter
 
 __all__ = ["Observation"]
 
 
-class Observation(observation.Observation):
-    def __init__(self, observation, **kwargs):
-        kwargs["jsondict"] = self._get_jsondict(observation)
-        super(Observation, self).__init__(**kwargs)
+class Observation(BaseAdapter):
 
-    def _get_jsondict(self, observation):
+    @classmethod
+    def to_fhir_object(cls, observation):
         jsondict = {}
+        jsondict["comment"] = cls.build_fhir_comment(observation)
+        jsondict["identifier"] = cls.build_fhir_identifier(observation)
+        jsondict["interpretation"] = cls.build_fhir_interpretation(observation)
+        jsondict["issued"] = cls.build_fhir_issued(observation)
+        jsondict["code"] = cls.build_fhir_code(observation)
+        jsondict["performer"] = cls.build_fhir_performer(observation)
+        jsondict["referenceRange"] = cls.build_fhir_reference_range(observation)
+        jsondict["status"] = cls.build_fhir_status(observation)
+        jsondict["valueQuantity"] = cls.build_fhir_value_quantity(observation)
+        jsondict["subject"] = cls.build_fhir_subject(observation)
+        jsondict["effectiveDateTime"] = cls.build_fhir_effective_datetime(observation)
+        return fhir_observation(jsondict=jsondict)
 
-        # comment
-        jsondict["comment"] = observation.remarks
+    @classmethod
+    def build_fhir_comment(cls, observation):
+        return observation.remarks
 
-        # identifier
-        jsondict["identifier"] = [
+
+    @classmethod
+    def build_fhir_identifier(cls, observation):
+        return [
             {
                 "use": "official",
                 "value": "-".join([observation.name, str(observation.id)]),
             }
         ]
 
-        # interpretation
+    @classmethod
+    def build_fhir_interpretation(cls, observation):
         # TODO: Interpretation is complicated
         value = observation.result
         lower_limit = observation.lower_limit
@@ -46,22 +61,25 @@ class Observation(observation.Observation):
             coding["code"] = v
             coding["display"] = cc["text"] = d
             cc["coding"] = [coding]
-            jsondict["interpretation"] = cc
+            return cc
 
-        # issued
+    @classmethod
+    def build_fhir_issued(cls, observation):
         issued = observation.write_date or observation.create_date
         if issued:
-            jsondict["issued"] = instance(issued).to_iso8601_string()
+            return instance(issued).to_iso8601_string()
 
-        # code
+    @classmethod
+    def build_fhir_code(cls, observation):
         # TODO Better coding!!
         code = observation.name
         if code:
             cc = {"text": code}
             cc["coding"] = [{"code": code, "display": code}]
-            jsondict["code"] = cc
+            return cc
 
-        # performer
+    @classmethod
+    def build_fhir_performer(cls, observation):
         persons = []
         performers = [
             x
@@ -76,10 +94,10 @@ class Observation(observation.Observation):
                 "reference": "".join(["Practitioner/", str(performer.id)]),
             }
             persons.append(r)
-        if persons:
-            jsondict["performer"] = persons
+        return persons
 
-        # referenceRange
+    @classmethod
+    def build_fhir_reference_range(cls, observation):
         units = safe_attrgetter(observation, "units.name", default="unknown")
         lower_limit = observation.lower_limit
         upper_limit = observation.upper_limit
@@ -94,9 +112,10 @@ class Observation(observation.Observation):
             # 'coding': [{
             # 'system':'http://hl7.org/fhir/referencerange-meaning',
             # 'code': 'normal'}]}}
-            jsondict["referenceRange"] = [ref]
+            return [ref]
 
-        # status
+    @classmethod
+    def build_fhir_status(cls, observation):
         value = observation.result
         if observation.excluded:
             if value is not None:
@@ -108,27 +127,28 @@ class Observation(observation.Observation):
                 status = "final"
             else:
                 status = "registered"
-        jsondict["status"] = status
+        return status
 
-        # valueQuantity
+    @classmethod
+    def build_fhir_value_quantity(cls, observation):
         # TODO More information
         value = observation.result
         units = safe_attrgetter(observation, "units.name", default="unknown")
         # code = None
         if value is not None:
-            jsondict["valueQuantity"] = {"value": value, "unit": units}
+            return {"value": value, "unit": units}
 
-        # subject
+    @classmethod
+    def build_fhir_subject(cls, observation):
         subject = safe_attrgetter(observation, "gnuhealth_lab_id.patient")
         if subject:
-            jsondict["subject"] = {
+            return {
                 "display": subject.name.rec_name,
                 "reference": "".join(["Patient/", str(subject.id)]),
             }
 
-        # effectiveDateTime
+    @classmethod
+    def build_fhir_effective_datetime(cls, observation):
         t = safe_attrgetter(observation, "gnuhealth_lab_id.date_analysis")
         if t:
-            jsondict["effectiveDateTime"] = instance(t).to_iso8601_string()
-
-        return jsondict
+            return instance(t).to_iso8601_string()

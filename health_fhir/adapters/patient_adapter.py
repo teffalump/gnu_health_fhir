@@ -1,8 +1,8 @@
 from .utils import safe_attrgetter
 from pendulum import instance
-from fhirclient.models import patient as fhir_patient
+from fhirclient.models.patient import Patient as fhir_patient
 from .base import BaseAdapter
-from .value_sets import maritalStatus as ms
+from ..value_sets import maritalStatus as ms
 from re import sub
 
 __all__ = ["Patient"]
@@ -11,28 +11,28 @@ __all__ = ["Patient"]
 class Patient(BaseAdapter):
 
     @classmethod
-    def toFhirObject(cls, patient):
+    def to_fhir_object(cls, patient):
         # TODO Add general_info field - where appropriate?
         # TODO Link - other links to same person
         # TODO Photo - Figure out contentType of photo
         # TODO managingOrganization
         jsondict = {}
-        jsondict["identifier"] = cls.buildFhirIdentifier(patient)
-        jsondict["name"] = cls.buildFhirName(patient)
-        jsondict["telecom"] = cls.buildFhirTelecom(patient)
-        jsondict["birthDate"] = cls.buildFhirBirthDate(patient)
-        jsondict["deceasedBoolean"] = cls.buildFhirDeceasedBoolean(patient)
-        jsondict["deceasedDateTime"] = cls.buildFhirDeceasedDateTime(patient)
-        jsondict["address"] = cls.buildFhirAddress(patient)
-        jsondict["gender"] = cls.buildFhirGender(patient)
-        jsondict["generalPractitioner"] = cls.buildFhirGeneralPractitioner(patient)
-        jsondict["active"] = cls.buildFhirActive(patient)
-        jsondict["maritalStatus"] = cls.buildFhirMaritalStatus(patient)
-        jsondict["communication"] = cls.buildFhirCommunication(patient)
-        return fhir_patient.Patient(jsondict=jsondict)
+        jsondict["identifier"] = cls.build_fhir_identifier(patient)
+        jsondict["name"] = cls.build_fhir_name(patient)
+        jsondict["telecom"] = cls.build_fhir_telecom(patient)
+        jsondict["birthDate"] = cls.build_fhir_birthdate(patient)
+        jsondict["deceasedBoolean"] = cls.build_fhir_deceased_boolean(patient)
+        jsondict["deceasedDateTime"] = cls.build_fhir_deceased_dateTime(patient)
+        jsondict["address"] = cls.build_fhir_address(patient)
+        jsondict["gender"] = cls.build_fhir_gender(patient)
+        jsondict["generalPractitioner"] = cls.build_fhir_general_practitioner(patient)
+        jsondict["active"] = cls.build_fhir_active(patient)
+        jsondict["maritalStatus"] = cls.build_fhir_marital_status(patient)
+        jsondict["communication"] = cls.build_fhir_communication(patient)
+        return fhir_patient(jsondict=jsondict)
 
     @classmethod
-    def buildFhirIdentifier(cls, patient):
+    def build_fhir_identifier(cls, patient):
         idents = []
         if patient.puid:
             i = {}
@@ -51,7 +51,7 @@ class Patient(BaseAdapter):
         return idents
 
     @classmethod
-    def buildFhirName(cls, patient):
+    def build_fhir_name(cls, patient):
         # TODO Make helper function
         names = []
         for name in patient.name.person_names:
@@ -69,7 +69,7 @@ class Patient(BaseAdapter):
         return names
 
     @classmethod
-    def buildFhirTelecom(cls, patient):
+    def build_fhir_telecom(cls, patient):
         # TODO Make helper function
         telecom = []
         for contact in patient.name.contact_mechanisms:
@@ -88,7 +88,7 @@ class Patient(BaseAdapter):
         return telecom
 
     @classmethod
-    def buildFhirGender(cls, patient):
+    def build_fhir_gender(cls, patient):
         # Gender
         # NOTE This is a difficult decision - what is gender for record-keeping
         # Currently, simply take biological sex and make further decisions later
@@ -107,25 +107,25 @@ class Patient(BaseAdapter):
         return g
 
     @classmethod
-    def buildFhirBirthDate(cls, patient):
+    def build_fhir_birthdate(cls, patient):
         try:
             return instance(patient.name.dob).to_iso8601_string()
         except:
             return None
 
     @classmethod
-    def buildFhirDeceasedBoolean(cls, patient):
+    def build_fhir_deceased_boolean(cls, patient):
         return patient.deceased
 
     @classmethod
-    def buildFhirDeceasedDateTime(cls, patient):
+    def build_fhir_deceased_datetime(cls, patient):
         try:
             return instance(patient.dod).to_iso8601_string()
         except:
             return None
 
     @classmethod
-    def buildFhirAddress(cls, patient):
+    def build_fhir_address(cls, patient):
         # Only one currently
         du = patient.name.du
         if du:
@@ -169,11 +169,11 @@ class Patient(BaseAdapter):
 
 
     @classmethod
-    def buildFhirActive(cls, patient):
+    def build_fhir_active(cls, patient):
         return patient.name.active
 
     @classmethod
-    def buildFhirGeneralPractitioner(cls, patient):
+    def build_fhir_general_practitioner(cls, patient):
         # generalPractitioner
         pcp = patient.primary_care_doctor
         if pcp:
@@ -185,7 +185,7 @@ class Patient(BaseAdapter):
 
 
     @classmethod
-    def buildFhirCommunication(cls, patient):
+    def build_fhir_communication(cls, patient):
         lang = patient.name.lang
         if lang:
             cc = {}
@@ -206,7 +206,8 @@ class Patient(BaseAdapter):
         # jsondict['photo'] = {'data': b64}]
 
     @classmethod
-    def buildFhirMaritalStatus(cls, patient):
+    def build_fhir_marital_status(cls, patient):
+        # TODO Make helper function
         # Health has concubinage and separated, which aren't truly
         # matching FHIR defined statuses
         if patient.name.marital_status:

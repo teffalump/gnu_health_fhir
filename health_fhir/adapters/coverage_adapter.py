@@ -1,30 +1,37 @@
 from pendulum import instance, now
-from fhirclient.models import coverage
+from fhirclient.models.coverage import Coverage as fhir_coverage
+from .base import import BaseAdapter
 
 __all__ = ["Coverage"]
 
 
-class Coverage(coverage.coverage):
-    def __init__(self, coverage, **kwargs):
-        kwargs["jsondict"] = self._get_jsondict(coverage)
-        super(Coverage, self).__init__(**kwargs)
+class Coverage(BaseAdapter):
 
-    def _get_jsondict(self, coverage):
+    @classmethod
+    def to_fhir_object(cls, coverage):
         jsondict = {}
+        jsondict["identifier"] = cls.build_fhir_identifier(coverage)
+        jsondict["status"] = cls.build_fhir_status(coverage)
+        jsondict["type"] = cls.build_fhir_type(coverage)
+        return fhir_coverage(jsondict=jsondict)
 
-        # identifier
-        json["identifier"] = [{"value": coverage.number}]
+    @classmethod
+    def build_fhir_identifier(cls, coverage):
+        return [{"value": coverage.number}]
 
-        # status
+
+    @classmethod
+    def build_fhir_status(cls, coverage):
         if coverage.member_exp:
             if now() < coverage.member_exp:
-                json["status"] = "active"
+                return "active"
             else:
-                json["status"] = "cancelled"
+                return "cancelled"
         else:  # assume active
-            json["status"] = "active"
+            return "active"
 
-        # type
+    @classmethod
+    def build_fhir_type(cls, coverage):
         # TODO There are preferred codes in FHIR
         if coverage.insurance_type:
-            json["type"] = {"coding": [{"code": coverage.insurance_type}]}
+            return {"coding": [{"code": coverage.insurance_type}]}

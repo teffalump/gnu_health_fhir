@@ -5,63 +5,26 @@ from setuptools import setup, Command
 
 NAME = 'health_fhir'
 
-# Convert MD to RST
-try:
-    from pypandoc import convert_file
-    read_md = lambda f: convert_file(f, 'rst')
-except ImportError:
-    print('warning: pypandoc module not found, cannot covert Markdown to RST')
-    read_md = open(f, 'r').read()
+with open('README.md') as readme:
+    README = readme.read()
+    README_TYPE = "text/markdown"
 
-# Copy from kennethreitz/setup.py
-here = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(NAME, 'VERSION')) as version:
+    VERSION = version.readlines()[0].strip()
 
-about = {}
-with open(os.path.join(here, NAME, '__version__.py')) as f:
-    exec(f.read(), about)
-
-class UploadCommand(Command):
-    """Support setup.py upload."""
-
-    description = 'Build and publish the package.'
-    user_options = []
-
-    @staticmethod
-    def status(s):
-        """Prints things in bold."""
-        print('\033[1m{0}\033[0m'.format(s))
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        try:
-            self.status('Removing previous builds…')
-            rmtree(os.path.join(here, 'dist'))
-        except OSError:
-            pass
-        self.status('Building Source and Wheel (universal) distribution…')
-        os.system('{0} setup.py sdist bdist_wheel --universal'.format(sys.executable))
-
-        self.status('Uploading the package to PyPi via Twine…')
-        os.system('twine upload dist/*')
-
-        self.status('Pushing git tags…')
-        os.system('git tag v{0}'.format(about['__version__']))
-        os.system('git push --tags')
+with open('requirements.txt') as requirements:
+    REQUIREMENTS = [line.rstrip() for line in requirements if line != '\n']
 
 setup(name = 'health_fhir',
         version = about['__version__'],
         description = 'Provides FHIR interface to GNU Health.',
-        long_description = read_md(os.path.join(here, 'README.md')),
+        long_description = README,
+        long_description_content_type = README_TYPE,
         url = 'https://github.com/teffalump/health_fhir',
         author = 'teffalump',
         author_email = 'chris@teffalump.com',
-        packages = ['health_fhir', 'pendulum'],
-        install_requires = ['fhirclient'],
+        packages = ['health_fhir'],
+        install_requires = ['fhirclient', 'pendulum'],
         include_package_data = True,
         zip_safe = False,
         classifiers = ['Development Status :: 2 - Pre-Alpha',
@@ -70,7 +33,4 @@ setup(name = 'health_fhir',
                        'Intended Audience :: Developers',
                        'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
                        'Operating System :: OS Independent'],
-        cmdclass={
-            'upload': UploadCommand,
-            },
         )

@@ -1,53 +1,67 @@
 from .utils import safe_attrgetter
 from pendulum import instance
-from fhirclient.models import encounter
+from fhirclient.models.encounter import Encounter as fhir_encounter
+from .base import BaseAdapter
 
 __all__ = ["Encounter"]
 
 
-class Encounter(encounter.Encounter):
+class Encounter(BaseAdapter):
     """In GNU Health, `encounters` are patient evaluations, or at least part of that model.
 
     We shall add the more clinical data to a ClinicalImpression attached to the encounter
     """
 
-    def __init__(self, enc, **kwargs):
-        kwargs["jsondict"] = self._get_jsondict(enc)
-        super(Encounter, self).__init__(**kwargs)
-
-    def _get_jsondict(self, enc):
+    @classmethod
+    def to_fhir_object(cls, enc):
         jsondict = {}
+        jsondict["class"] = cls.build_fhir_class(enc)
+        jsondict["type"] = cls.build_fhir_type(enc)
+        jsondict["priority"] = cls.build_fhir_priority(enc)
+        jsondict["subject"] = cls.build_fhir_subject(enc)
+        jsondict["participant"] = cls.build_fhir_participant(enc)
+        jsondict["period"] = cls.build_fhir_period(enc)
+        jsondict["length"] = cls.build_fhir_length(enc)
+        jsondict["status"] = cls.build_fhir_status(enc)
+        jsondict["identifier"] = cls.build_fhir_identifier(enc)
+        jsondict["reason"], jsondict["diagnosis"] = cls.build_fhir_reason_and_diagnosis(enc)
+        return fhir_encounter(jsondict=jsondict)
 
-        # Identifier
+    @classmethod
+    def build_fhir_identifier(cls, enc):
         if enc.code:
-            jsondict["identifier"] = [{"value": enc.code}]
-
-        # Status
+            return [{"value": enc.code}]
+    
+    @classmethod
+    def build_fhir_status(cls, enc):
         # GNU Health states - in_progress, done, signed, None
         if enc.state in ["done", "signed"] or (
             enc.evaluation_start and enc.evaluation_endtime
         ):
-            jsondict["status"] = "finished"
+            status = "finished"
         elif enc.state == "in_progress":
-            jsondict["status"] = "in-progress"
+            status = "in-progress"
         elif enc.appointment:
             if enc.appointment.checked_in_date:
-                jsondict["status"] = "arrived"
+                status = "arrived"
             else:
-                jsondict["status"] = "planned"
+                status = "planned"
         else:
-            jsondict["status"] = "unknown"
+            status = "unknown"
+        return status
 
-        # Class
+    @classmethod
+    def build_fhir_class(cls, enc):
         # GNU Health types - outpatient, inpatient
         if enc.evaluation_type == "outpatient":
-            jsondict["class"] = {"code": "AMB", "display": "ambulatory"}
+            return {"code": "AMB", "display": "ambulatory"}
         elif enc.evaluation_type == "inpatient":
-            jsondict["class"] = {"code": "IMP", "display": "inpatient encounter"}
+            return {"code": "IMP", "display": "inpatient encounter"}
         else:
-            pass  # TODO
+            return None # TODO
 
-        # Type
+    @classmethod
+    def build_fhir_type(cls, enc):
         # GNU Health - well_woman/man/child, followup, new
         if enc.visit_type == "new":
             g = {"text": "New health condition", "coding": [{"code": "new"}]}
@@ -62,9 +76,10 @@ class Encounter(encounter.Encounter):
         else:
             g = {}
         if g:
-            jsondict["type"] = [g]
+            return [g]
 
-        # Priority
+    @classmethod
+    def build_fhir_priority(cls, enc):
         # GNU Health - a = Normal, b = Urgent, c = Medical Emergency
         if enc.urgency == "a":
             g = {"text": "Normal", "coding": [{"code": "a"}]}
@@ -75,16 +90,18 @@ class Encounter(encounter.Encounter):
         else:
             g = {}
         if g:
-            jsondict["priority"] = g
+            return g
 
-        # Subject
+    @classmethod
+    def build_fhir_subject(cls, enc):
         if enc.patient:
-            jsondict["subject"] = {
+            return {
                 "display": enc.patient.rec_name,
                 "reference": "".join(["Patient/", str(enc.patient.id)]),
             }
 
-        # Participant
+    @classmethod
+    def build_fhir_participant(cls, enc):
         # signed_by (sign), healthprof (initiate)
         parts = []
         if enc.signed_by:
@@ -107,31 +124,35 @@ class Encounter(encounter.Encounter):
             )
         if parts:
             if len(parts) > 1:
-                jsondict["participant"] = parts[:1] if parts[0] == parts[1] else parts
+                return parts[:1] if parts[0] == parts[1] else parts
             else:
-                jsondict["participant"] = parts
+                return parts
 
+    @classmethod
+    def build_fhir_period(cls, enc):
         # Period
+        period = {}
         if enc.evaluation_start:
-            jsondict["period"] = {
-                "start": instance(enc.evaluation_start).to_is8601_string()
-            }
-            if enc.evaluation_endtime:
-                jsondict["period"]["end"] = instance(
-                    enc.evaluation_endtime
-                ).to_is8601_string()
+            period["start"] = instance(enc.evaluation_start).to_is8601_string()
+        if enc.evaluation_endtime:
+            period["end"] = instance(enc.evaluation_endtime).to_is8601_string()
+        if period:
+            return period
 
-        # Length
+    @classmethod
+    def build_fhir_length(cls, enc):
         # timedelta object
         # Use minutes
         if enc.evaluation_length:
-            jsondict["length"] = {
+            return {
                 "code": "min",
                 "value": enc.evaluation_length.seconds // 60,
                 "unit": "minute",
                 "system": "http://unitsofmeasure.org",
             }
 
+    @classmethod
+    def build_fhir_reason_and_diagnosis(cls, enc):
         # Diagnosis/Reason
         # TODO better information, add note to Condition reference
         # diagnosis, related_condition, secondary_conditions
@@ -149,7 +170,4 @@ class Encounter(encounter.Encounter):
             temp = True
         for x, y in enumerate(enc.secondary_conditions, start=3 if temp else 2):
             diags.append({"rank": x, "condition": {"display": y.pathology.name}})
-        if diags:
-            jsondict["diagnosis"] = diags
-
-        return jsondict
+        return [{"text": cond["display"]}], diags

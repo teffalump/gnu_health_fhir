@@ -8,29 +8,29 @@ class BaseAdapter:
 
     ##### CONVERSION ######
     @classmethod
-    def toFhirObject(gh_obj):
+    def to_fhir_object(cls, gh_object):
         raise NotImplemented()
 
     @classmethod
-    def toHealthObject(fhir_obj):
+    def to_health_object(cls, fhir_object):
         raise NotImplemented()
 
 
     ###### CRUD #######
     @classmethod
-    def read():
+    def read(cls, gh_object):
         raise NotImplemented()
 
     @classmethod
-    def create():
+    def create(cls, fhir_objects):
         raise NotImplemented()
 
     @classmethod
-    def update():
+    def update(cls, fhir_obj, gh_object):
         raise NotImplemented()
 
     @classmethod
-    def delete():
+    def delete(cls, gh_object):
         raise NotImplemented()
 
 

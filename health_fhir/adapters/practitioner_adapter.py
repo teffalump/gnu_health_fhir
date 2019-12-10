@@ -1,22 +1,29 @@
 from operator import attrgetter
 from pendulum import instance
-from fhirclient.models import practitioner
+from fhirclient.models.practitioner import Practitioner as fhir_practitioner
 
 __all__ = ["Practitioner"]
 
 
-class Practitioner(practitioner.Practitioner):
-    def __init__(self, practitioner, **kwargs):
-        kwargs["jsondict"] = self._get_jsondict(practitioner)
-        super(Practitioner, self).__init__(**kwargs)
+class Practitioner(BaseAdapter):
 
-    def _get_jsondict(self, hp):
+    @classmethod
+    def to_fhir_object(cls, hp):
         jsondict = {}
+        jsondict["active"] = cls.build_fhir_active(hp)
+        jsondict["telecom"] = cls.build_fhir_telecom(hp)
+        jsondict["name"] = cls.build_fhir_name(hp)
+        jsondict["identifier"] = cls.build_fhir_identifier(hp)
+        jsondict["gender"] = cls.build_fhir_gender(hp)
+        jsondict["communication"] = cls.build_fhir_communication(hp)
+        return fhir_practitioner(jsondict=jsondict)
 
-        # active
-        jsondict["active"] = hp.name.active
+    @classmethod
+    def build_fhir_active(cls, hp):
+        return hp.name.active
 
-        # telecom
+    @classmethod
+    def build_fhir_telecom(cls, hp):
         telecom = []
         for contact in hp.name.contact_mechanisms:
             c = {"value": contact.value}
@@ -29,10 +36,10 @@ class Practitioner(practitioner.Practitioner):
             else:
                 c["use"] = c["system"] = contact.type
             telecom.append(c)
-        if telecom:
-            jsondict["telecom"] = telecom
+        return telecom
 
-        # name
+    @classmethod
+    def build_fhir_name(cls, hp):
         names = []
         for name in hp.name.person_names:
             n = {}
@@ -47,16 +54,17 @@ class Practitioner(practitioner.Practitioner):
                     n["period"]["end"] = instance(name.date_to).to_iso8601_string()
             names.append(n)
         if names:
-            jsondict["name"] = names
+            return names
         else:
             # try in default fields
             n = {}
             n["given"] = [x for x in hp.name.name.split()]
             n["family"] = hp.name.lastname
             n["use"] = "official"
-            jsondict["name"] = [n]
+            return [n]
 
-        # identifier
+    @classmethod
+    def build_fhir_identifier(cls, hp):
         idents = []
         if hp.puid:
             i = {
@@ -73,10 +81,10 @@ class Practitioner(practitioner.Practitioner):
                 "type": {"text": alt.alternative_id_type},
             }
             idents.append(i)
-        if idents:
-            jsondict["identifier"] = idents
+        return idents
 
-        # gender
+    @classmethod
+    def build_fhir_gender(cls, hp):
         g = hp.name.gender
         if g:
             if g == "f":
@@ -87,9 +95,10 @@ class Practitioner(practitioner.Practitioner):
                 l = "other"
         else:
             l = "unknown"
-        jsondict["gender"] = l
+        return l
 
-        # communication
+    @classmethod
+    def build_fhir_communication(cls, hp):
         lang = hp.name.lang
         if lang:
             cc = {"text": lang.name}
@@ -101,7 +110,7 @@ class Practitioner(practitioner.Practitioner):
                 "system": "urn:ietf:bcp:47",
             }
             cc["coding"] = [c]
-            jsondict["communication"] = [cc]
+            return [cc]
 
         # TODO Handle the specialties and roles better
         #     Specifically, output better job titles -- e.g., radiology tech, etc.
@@ -123,5 +132,3 @@ class Practitioner(practitioner.Practitioner):
 
         # pr = practitionerRole(role=role, specialty=specialties,
         # managingOrganization=organization)
-
-        return jsondict

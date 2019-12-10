@@ -1,42 +1,57 @@
 from .utils import safe_attrgetter
 from pendulum import instance
-from fhirclient.models import medicationstatement
+from fhirclient.models.medicationstatement import MedicationStatement as fhir_med
+from .base import BaseAdapter
 
 __all__ = ["MedicationStatement"]
 
 
-class MedicationStatement(medicationstatement.MedicationStatement):
-    def __init__(self, med, **kwargs):
-        kwargs["jsondict"] = self._get_jsondict(med)
-        super(MedicationStatement, self).__init__(**kwargs)
+class MedicationStatement(BaseAdapter):
 
-    def _get_jsondict(self, med):
+    @classmethod
+    def to_fhir_object(cls, med):
+        # TODO informationSource #See if we can determine this in Health?
         jsondict = {}
+        jsondict["identifier"] = cls.build_fhir_identifier(med)
+        jsondict["subject"] = cls.build_fhir_subject(med)
+        jsondict["dateAsserted"] = cls.build_fhir_date_asserted(med)
+        jsondict["status"] = cls.build_fhir_status(med)
+        jsondict["dosage"] = cls.build_fhir_dosage(med)
+        jsondict["taken"] = cls.build_fhir_taken(med)
+        jsondict["reasonNotTaken"] = cls.build_fhir_reason_not_taken(med)
+        jsondict["reasonCode"] = cls.build_fhir_reason_code(med)
+        jsondict["effectivePeriod"] = cls.build_fhir_effective_period(med)
+        jsondict["note"] = cls.build_fhir_note(med)
+        jsondict["medicationCodeableConcept"] = cls.build_fhir_medication_codeable_concept(med)
+        return fhir_med(jsondict=jsondict)
 
-        # identifier
-        jsondict["identifier"] = [
+    @classmethod
+    def build_fhir_identifier(cls, med):
+        return [
             {
                 "use": "official",
                 "value": "-".join([med.medicament.rec_name, str(med.id)]),
             }
         ]
 
-        # subject
+    @classmethod
+    def build_fhir_subject(cls, med):
         subject = med.name
-        jsondict["subject"] = {
+        return {
             "display": subject.name.rec_name,
             "reference": "/".join(["Patient", str(subject.id)]),
         }
 
-        # TODO
-        # informationSource #See if we can determine this in Health?
 
-        # date?
+    @classmethod
+    def build_fhir_date_asserted(cls, med):
+        # TODO accurate date
         date = med.create_date
         if date:
-            jsondict["dateAsserted"] = instance(date).to_iso8601_string()
+            return instance(date).to_iso8601_string()
 
-        # status
+    @classmethod
+    def build_fhir_status(cls, med):
         if med.is_active:
             s = "active"
         elif med.course_completed:
@@ -45,10 +60,12 @@ class MedicationStatement(medicationstatement.MedicationStatement):
             s = "stopped"
         else:
             s = "intended"
-        jsondict["status"] = s
+        return s
 
-        # dosage
+    @classmethod
+    def build_fhir_dosage(cls, med):
         # TODO Can always add more information!
+        # TODO make into converter / config
         code_conv = {
             "seconds": "s",
             "minutes": "min",
@@ -57,7 +74,6 @@ class MedicationStatement(medicationstatement.MedicationStatement):
             "months": "mo",
             "years": "a",
         }
-
         dose = {}
         # Amount (this should be listed, but could be patient reported)
         if med.dose:
@@ -122,23 +138,26 @@ class MedicationStatement(medicationstatement.MedicationStatement):
             num = {"value": med.infusion_rate, "unit": "mL"}
             den = {"value": 1, "unit": "hr"}
             dose["rateRatio"] = {"numerator": num, "denominator": den}
-        jsondict["dosage"] = [dose]
+        return [dose]
 
-        # taken
+    @classmethod
+    def build_fhir_taken(cls, med):
         # TODO Health equivalent?
         # y | n | unk | na
         if not med.discontinued:
-            jsondict["taken"] = "y"
+            return "y"
         else:
-            jsondict["taken"] = "n"
+            return "n"
 
-        # reasonNotTaken
+    @classmethod
+    def build_fhir_reason_not_taken(cls, med):
         if med.discontinued:
-            jsondict["reasonNotTaken"] = {
+            return {
                 "text": med.discontinued_reason or "<unknown>"
             }
 
-        # reasonCode
+    @classmethod
+    def build_fhir_reason_code(cls, med):
         # Ideally should make indication connect to patient condition
         reason = med.indication
         if reason:
@@ -149,22 +168,23 @@ class MedicationStatement(medicationstatement.MedicationStatement):
                 "display": reason.name,
             }
             cc["coding"] = [coding]
-            jsondict["reasonCode"] = [cc]
+            return [cc]
 
-        # effectivePeriod
+    @classmethod
+    def build_fhir_effective_period(cls, med):
         start, end = med.start_treatment, med.end_treatment
         if start:
             p = {"start": instance(start).to_iso8601_string()}
             if end:
                 p["end"] = instance(end).to_iso8601_string()
-            jsondict["effectivePeriod"] = p
+            return p
 
-        # note
+    @classmethod
+    def build_fhir_note(cls, med):
         if med.notes:
-            jsondict["note"] = {"text": med.notes}
+            return {"text": med.notes}
 
-        # medicationCodeableConcept
+    @classmethod
+    def build_fhir_medication_codeable_concept(cls, med):
         # TODO Fill this out more
-        jsondict["medicationCodeableConcept"] = {"text": med.medicament.rec_name}
-
-        return jsondict
+        return {"text": med.medicament.rec_name}

@@ -1,83 +1,116 @@
 from .utils import safe_attrgetter
 from pendulum import instance
-from fhirclient.models import clinicalimpression
+from fhirclient.models.clinicalimpression import ClinicalImpression as fhir_impression
 
 __all__ = ["ClinicalImpression"]
 
 
-class ClinicalImpression(clinicalimpression.ClinicalImpression):
-    """Immature resource somewhat equivalent to SOAP notes, H&P, etc.
+class ClinicalImpression(BaseAdapter):
+    """Immature resource somewhat equivalent to SOAP notes, H&P, etc
 
     Eventually, should support 3 models:
         - evaluations (most important)
         - roundings
         - ambulatory care
     """
-
-    def __init__(self, note, **kwargs):
-        kwargs["jsondict"] = self._get_jsondict(note)
-        super(ClinicalImpression, self).__init__(**kwargs)
-
-    def _get_jsondict(self, note):
+    @classmethod
+    def to_fhir_object(cls, impression):
         jsondict = {}
-
-        # Identifier
-        if note.code:
-            jsondict["identifier"] = [{"value": note.code}]
-
-        # Status
-        # GNU Health states - in_progress, done, signed, None
-        if note.state in ["done", "signed"] or (
-            note.evaluation_start and note.evaluation_endtime
-        ):
-            jsondict["status"] = "completed"
-        elif note.state == "in_progress" or note.appointment:
-            jsondict["status"] = "draft"
+        jsondict["identifier"] = cls.build_fhir_identifier(impression)
+        jsondict["status"] = cls.build_fhir_status(impression)
+        jsondict["code"] = cls.build_fhir_code(impression)
+        dt_or_period = cls.build_fhir_effective_datetime_or_period(impression)
+        if isinstance(dt_or_period, dict):
+            jsondict["effectivePeriod"] = dt_or_period
         else:
-            jsondict["status"] = "unknown"
+            jsondict["effectiveDateTime"] = dt_or_period
+        jsondict["context"] = cls.build_fhir_code(impression)
+        jsondict["subject"] = cls.build_fhir_subject(impression)
+        jsondict["assessor"] = cls.build_fhir_assessor(impression)
+        jsondict["date"] = cls.build_fhir_date(impression)
+        jsondict["summary"] = cls.build_fhir_summary(impression)
+        return fhir_impression(jsondict=jsondict)
 
-        # Code
-        # Type of assessment - TODO More information
-        jsondict["code"] = {"text": "Patient evaluation"}
+    @classmethod
+    def build_fhir_identifier(cls, impression):
+        try:
+            return [{"value": impression.code}]
+        except:
+            return None
 
-        # Context
-        # Point to encounter
-        jsondict["context"] = {
-            "display": note.code or "code_unknown",
-            "reference": "".join(["Encounter/", str(note.id)]),
+    @classmethod
+    def build_fhir_status(cls, impression):
+        # GNU Health states - in_progress, done, signed, None
+        if impression.state in ["done", "signed"] or (
+            impression.evaluation_start and impression.evaluation_endtime
+        ):
+            status = "completed"
+        elif impression.state == "in_progress" or impression.appointment:
+            status = "draft"
+        else:
+            status = "unknown"
+        return status
+    
+    @classmethod
+    def build_fhir_code(cls, impression):
+        # TODO More information
+        return {"text": "Patient evaluation"}
+
+    @classmethod
+    def build_fhir_context(cls, impression):
+        return {
+            "display": impression.code or "code_unknown",
+            "reference": "".join(["Encounter/", str(impression.id)]),
         }
-        # Subject
-        if note.patient:
-            jsondict["subject"] = {
-                "display": note.patient.rec_name,
-                "reference": "".join(["Patient/", str(note.patient.id)]),
+    
+    @classmethod
+    def build_fhir_subject(cls, impression):
+        try:
+           return {
+                "display": impression.patient.rec_name,
+                "reference": "".join(["Patient/", str(impression.patient.id)]),
             }
-        # effectiveDateTime - time of assessment
-        if note.evaluation_start:
-            start = instance(note.evaluation_start).to_iso8601_string()
-            if note.evaluation_endtime:
-                end = instance(note.evaluation_endtime).to_iso8601_string()
-                jsondict["effectivePeriod"] = {"start": start, "end": end}
+        except:
+            return None
+    
+    @classmethod
+    def build_fhir_effective_datetime_or_period(cls, impression):
+        try:
+            start = instance(impression.evaluation_start).to_iso8601_string()
+            if impression.evaluation_endtime:
+                end = instance(impression.evaluation_endtime).to_iso8601_string()
+                ["effectivePeriod"] = {"start": start, "end": end}
             else:
                 jsondict["effectiveDateTime"] = start
+        except:
+            return None
 
-        # assessor
-        if note.healthprof:
-            jsondict["assessor"] = {
-                "display": note.healthprof.rec_name,
-                "reference": "".join(["Practitioner/", str(note.healthprof.id)]),
+    @classmethod
+    def build_fhir_assessor(cls, impression):
+        try:
+            return {
+                "display": impression.healthprof.rec_name,
+                "reference": "".join(["Practitioner/", str(impression.healthprof.id)]),
             }
+        except:
+            return None
 
-        # date - time recorded
-        last = note.write_date or note.evaluation_start
-        jsondict["date"] = instance(last).to_iso8601_string()
+    @classmethod
+    def build_fhir_date(cls, impression):
+        try:
+            last = impression.write_date or impression.evaluation_start
+            return instance(last).to_iso8601_string()
+        except:
+            return None
 
+    @classmethod
+    def build_fhir_summary(cls, impression):
         # Shove Objective in here - evaluation_summary
         # Shove HPI in here - present_illness + chief_complaint
         # Shove Plan in here - directions
-        jsondict["summary"] = "CC: {}\n\nHPI: {}\n\nObjective: {}\n\nPlan: {}".format(
+        return "CC: {}\n\nHPI: {}\n\nObjective: {}\n\nPlan: {}".format(
             *safe_attrgetter(
-                note,
+                impression,
                 "chief_complaint",
                 "present_illness",
                 "evaluation_summary",
@@ -87,10 +120,9 @@ class ClinicalImpression(clinicalimpression.ClinicalImpression):
         )
 
         # investigation - put all the s/s, pe findings there
-        clinical_findings = {"code": {"text": "Clinical findings"}}
+        # clinical_findings = {"code": {"text": "Clinical findings"}}
 
         # Other misc garbage
         # extras = [{'text': x} for x in safe_attrgetter(note, 'notes', 'notes_complaint', 'info_diagnosis', default='') if x.strip()]
         # if extras: jsondict['note'] = extras
 
-        return jsondict

@@ -1,19 +1,28 @@
-from fhirclient.models import familymemberhistory
+from fhirclient.models.familymemberhistory import FamilyMemberHistory as fhir_fmh
 from pendulum import instance
+from .base import BaseAdapter
+from ..value_sets import familyMember
 
 __all__ = ["FamilyMemberHistory"]
 
 
-class FamilyMemberHistory(familymemberhistory.FamilyMemberHistory):
-    def __init__(self, member, **kwargs):
-        kwargs["jsondict"] = self._get_jsondict(member)
-        super(FamilyMemberHistory, self).__init__(**kwargs)
+class FamilyMemberHistory(BaseAdapter):
 
-    def _get_jsondict(self, member):
+    @classmethod
+    def to_fhir_object(cls, member):
         # TODO Add more info to family history data model on Health side
         jsondict = {}
+        jsondict["gender"] = cls.build_fhir_gender(member)
+        jsondict["date"] = cls.build_fhir_date(member)
+        jsondict["patient"] = cls.build_fhir_patient(member)
+        jsondict["relationship"] = cls.build_fhir_relationship(member)
+        jsondict["status"] = cls.build_fhir_status(member)
+        jsondict["condition"] = cls.build_fhir_condition(member)
+        return fhir_fmh(jsondict=jsondict)
 
-        # gender
+    @classmethod
+    def build_fhir_gender(cls, member):
+        # TODO Turn into helper / config
         ### NOTE KEEP THIS UPDATED ###
         # Possible selections (currently)
         #
@@ -43,24 +52,26 @@ class FamilyMemberHistory(familymemberhistory.FamilyMemberHistory):
             g = "male"
         else:
             g = "unknown"
-        jsondict["gender"] = g
+        return g
 
-        # date
+    @classmethod
+    def build_fhir_date(cls, member):
         date = member.write_date or member.create_date
         if date:
-            instance(date).to_iso8601_string()
+            return instance(date).to_iso8601_string()
 
-        # patient
+    @classmethod
+    def build_fhir_patient(cls, member):
         patient = member.patient
         if patient:
-            jsondict["patient"] = {
+            return {
                 "display": patient.rec_name,
                 "reference": "".join(["Patient/", str(patient.id)]),
             }
 
-        # relationship
-        from .value_sets import familyMember
 
+    @classmethod
+    def build_fhir_relationship(cls, member):
         if member:
             cc = {}
             c = {}
@@ -74,13 +85,15 @@ class FamilyMemberHistory(familymemberhistory.FamilyMemberHistory):
                 c["system"] = info[0]["system"]
             cc["text"] = c["display"] = k
             cc["coding"] = [c]
-            jsondict["relationship"] = cc
+            return cc
 
-        # status
+    @classmethod
+    def build_fhir_status(cls, member):
         # TODO Unknown equivalent in Health
-        jsondict["status"] = "completed"
+        return "completed"
 
-        # condition
+    @classmethod
+    def build_fhir_condition(cls, member):
         path = member.name
         if path:
             code = {}
@@ -90,6 +103,4 @@ class FamilyMemberHistory(familymemberhistory.FamilyMemberHistory):
             }  # ICD-10-CM
             code["text"] = coding["display"] = path.name
             code["coding"] = [coding]
-            jsondict["condition"] = [{"code": code}]
-
-        return jsondict
+            return [{"code": code}]

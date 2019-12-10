@@ -2,121 +2,133 @@ from .utils import safe_attrgetter
 from pendulum import instance
 from fhirclient.models import observation
 
-__all__=['Observation']
+__all__ = ["Observation"]
+
 
 class Observation(observation.Observation):
-
     def __init__(self, observation, **kwargs):
-        kwargs['jsondict'] = self._get_jsondict(observation)
+        kwargs["jsondict"] = self._get_jsondict(observation)
         super(Observation, self).__init__(**kwargs)
 
     def _get_jsondict(self, observation):
         jsondict = {}
 
-        #comment
-        jsondict['comment'] = observation.remarks
+        # comment
+        jsondict["comment"] = observation.remarks
 
-        #identifier
-        jsondict['identifier'] = [{'use': 'official',
-                                    'value': '-'.join([observation.name, str(observation.id)])}]
+        # identifier
+        jsondict["identifier"] = [
+            {
+                "use": "official",
+                "value": "-".join([observation.name, str(observation.id)]),
+            }
+        ]
 
-        #interpretation
+        # interpretation
         # TODO: Interpretation is complicated
         value = observation.result
         lower_limit = observation.lower_limit
         upper_limit = observation.upper_limit
 
-        if value is not None \
-            and lower_limit is not None \
-            and upper_limit is not None:
+        if value is not None and lower_limit is not None and upper_limit is not None:
             cc = {}
             coding = {}
             if value < lower_limit:
-                v = 'L'
-                d = 'Low'
+                v = "L"
+                d = "Low"
             elif value > upper_limit:
-                v = 'H'
-                d = 'High'
+                v = "H"
+                d = "High"
             else:
-                v = 'N'
-                d = 'Normal'
-            coding['system'] = 'http://hl7.org/fhir/v2/0078'
-            coding['code'] = v
-            coding['display'] = cc['text'] = d
-            cc['coding'] = [coding]
-            jsondict['interpretation'] = cc
+                v = "N"
+                d = "Normal"
+            coding["system"] = "http://hl7.org/fhir/v2/0078"
+            coding["code"] = v
+            coding["display"] = cc["text"] = d
+            cc["coding"] = [coding]
+            jsondict["interpretation"] = cc
 
-        #issued
+        # issued
         issued = observation.write_date or observation.create_date
-        if issued: jsondict['issued'] = instance(issued).to_iso8601_string()
+        if issued:
+            jsondict["issued"] = instance(issued).to_iso8601_string()
 
-        #code
-        #TODO Better coding!!
+        # code
+        # TODO Better coding!!
         code = observation.name
         if code:
-            cc = {'text': code}
-            cc['coding'] = [{'code': code, 'display': code}]
-            jsondict['code'] = cc
+            cc = {"text": code}
+            cc["coding"] = [{"code": code, "display": code}]
+            jsondict["code"] = cc
 
-        #performer
+        # performer
         persons = []
-        performers = [x for x in\
-                        safe_attrgetter(observation, 'gnuhealth_lab_id.pathologist', 'gnuhealth_lab_id.done_by')\
-                        if x]
+        performers = [
+            x
+            for x in safe_attrgetter(
+                observation, "gnuhealth_lab_id.pathologist", "gnuhealth_lab_id.done_by"
+            )
+            if x
+        ]
         for performer in performers:
-            r = {'display': performer.name.rec_name,
-                    'reference': ''.join(['Practitioner/', str(performer.id)])}
+            r = {
+                "display": performer.name.rec_name,
+                "reference": "".join(["Practitioner/", str(performer.id)]),
+            }
             persons.append(r)
-        if persons: jsondict['performer'] = persons
+        if persons:
+            jsondict["performer"] = persons
 
-        #referenceRange
-        units = safe_attrgetter(observation, 'units.name', default='unknown')
+        # referenceRange
+        units = safe_attrgetter(observation, "units.name", default="unknown")
         lower_limit = observation.lower_limit
         upper_limit = observation.upper_limit
 
-        if units is not None \
-            and lower_limit is not None \
-            and upper_limit is not None:
-                ref = {'low': {'value': lower_limit, 'unit': units},
-                        'high': {'value': upper_limit, 'unit': units}}
-                    # 'meaning': {
-                        # 'text': 'Normal range',
-                        # 'coding': [{
-                            # 'system':'http://hl7.org/fhir/referencerange-meaning',
-                            # 'code': 'normal'}]}}
-                jsondict['referenceRange'] = [ref]
+        if units is not None and lower_limit is not None and upper_limit is not None:
+            ref = {
+                "low": {"value": lower_limit, "unit": units},
+                "high": {"value": upper_limit, "unit": units},
+            }
+            # 'meaning': {
+            # 'text': 'Normal range',
+            # 'coding': [{
+            # 'system':'http://hl7.org/fhir/referencerange-meaning',
+            # 'code': 'normal'}]}}
+            jsondict["referenceRange"] = [ref]
 
-        #status
+        # status
         value = observation.result
         if observation.excluded:
             if value is not None:
-                status = 'cancelled'
+                status = "cancelled"
             else:
-                status = 'entered in error'
+                status = "entered in error"
         else:
             if value is not None:
-                status = 'final'
+                status = "final"
             else:
-                status = 'registered'
-        jsondict['status'] = status
+                status = "registered"
+        jsondict["status"] = status
 
-        #valueQuantity
-        #TODO More information
+        # valueQuantity
+        # TODO More information
         value = observation.result
-        units = safe_attrgetter(observation, 'units.name', default='unknown')
+        units = safe_attrgetter(observation, "units.name", default="unknown")
         # code = None
         if value is not None:
-            jsondict['valueQuantity'] = {'value': value,
-                                        'unit': units}
+            jsondict["valueQuantity"] = {"value": value, "unit": units}
 
-        #subject
-        subject = safe_attrgetter(observation, 'gnuhealth_lab_id.patient')
+        # subject
+        subject = safe_attrgetter(observation, "gnuhealth_lab_id.patient")
         if subject:
-            jsondict['subject'] = {'display': subject.name.rec_name,
-                                    'reference': ''.join(['Patient/', str(subject.id)])}
+            jsondict["subject"] = {
+                "display": subject.name.rec_name,
+                "reference": "".join(["Patient/", str(subject.id)]),
+            }
 
-        #effectiveDateTime
-        t = safe_attrgetter(observation, 'gnuhealth_lab_id.date_analysis')
-        if t: jsondict['effectiveDateTime'] = instance(t).to_iso8601_string()
+        # effectiveDateTime
+        t = safe_attrgetter(observation, "gnuhealth_lab_id.date_analysis")
+        if t:
+            jsondict["effectiveDateTime"] = instance(t).to_iso8601_string()
 
         return jsondict

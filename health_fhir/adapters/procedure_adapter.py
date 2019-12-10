@@ -2,121 +2,150 @@ from .utils import safe_attrgetter
 from pendulum import instance
 from fhirclient.models import procedure
 
-__all__ = ['Procedure']
+__all__ = ["Procedure"]
+
 
 class Procedure(procedure.Procedure):
-
     def __init__(self, procedure, **kwargs):
-        kwargs['jsondict'] = self._get_jsondict(procedure)
+        kwargs["jsondict"] = self._get_jsondict(procedure)
         super(Procedure, self).__init__(**kwargs)
 
     def _get_jsondict(self, procedure):
         jsondict = {}
 
-        #identifier
-        i = {'use': 'official',
-                'value': '-'.join([procedure.procedure.name, str(procedure.id)])}
-        jsondict['identifier'] = [i]
+        # identifier
+        i = {
+            "use": "official",
+            "value": "-".join([procedure.procedure.name, str(procedure.id)]),
+        }
+        jsondict["identifier"] = [i]
 
-        #subject
+        # subject
         subject = procedure.name.patient
         if subject:
-            jsondict['subject'] = {'display': subject.name.rec_name,
-                                'reference': ''.join(['Patient/', str(subject.id)])}
+            jsondict["subject"] = {
+                "display": subject.name.rec_name,
+                "reference": "".join(["Patient/", str(subject.id)]),
+            }
 
-        #status
+        # status
         state = procedure.name.state
         s = None
-        if state == 'in_progress':
-            s = 'in-progress'
-        elif state == 'cancelled':
-            s = 'aborted'
-        elif state in ['done', 'signed']:
-            s = 'completed'
-        elif state in ['draft', 'confirmed']: #NOT in standard
-            s = 'scheduled'
+        if state == "in_progress":
+            s = "in-progress"
+        elif state == "cancelled":
+            s = "aborted"
+        elif state in ["done", "signed"]:
+            s = "completed"
+        elif state in ["draft", "confirmed"]:  # NOT in standard
+            s = "scheduled"
         else:
-            s = 'entered-in-error'
-        jsondict['status'] = s
+            s = "entered-in-error"
+        jsondict["status"] = s
 
-        #category
-        #TODO
+        # category
+        # TODO
 
-        #code
+        # code
         cc = {}
-        c = {'userSelected': False,
-                'system': 'urn:oid:2.16.840.1.113883.6.4',
-                'code': procedure.procedure.name} #ICD-10-PCS
-        cc['text'] = c['display'] = procedure.procedure.description.capitalize()
+        c = {
+            "userSelected": False,
+            "system": "urn:oid:2.16.840.1.113883.6.4",
+            "code": procedure.procedure.name,
+        }  # ICD-10-PCS
+        cc["text"] = c["display"] = procedure.procedure.description.capitalize()
 
-        cc['coding']=[c]
-        jsondict['code'] = cc
+        cc["coding"] = [c]
+        jsondict["code"] = cc
 
-        #notDone
-        jsondict['notDone'] = False #There is no Health equivalent (I think?)
+        # notDone
+        jsondict["notDone"] = False  # There is no Health equivalent (I think?)
 
-        #reasonCode
+        # reasonCode
         code = procedure.name.pathology
         if code:
-            cc = {'text': code.name}
-            coding = {'system': 'urn:oid:2.16.840.1.113883.6.90', #ICD-10-CM
-                    'code': code.code,
-                    'display': code.name}
-            cc['coding']=[coding]
-            jsondict['reasonCode'] = [cc]
+            cc = {"text": code.name}
+            coding = {
+                "system": "urn:oid:2.16.840.1.113883.6.90",  # ICD-10-CM
+                "code": code.code,
+                "display": code.name,
+            }
+            cc["coding"] = [coding]
+            jsondict["reasonCode"] = [cc]
 
-        #performer
+        # performer
         actors = []
         surgeon = procedure.name.surgeon
         if surgeon:
-            ref = {'display': surgeon.name.rec_name,
-                    'reference': '/'.join(['Practitioner', str(surgeon.id)])}
-            role = {'text': 'Surgeon',
-                    'coding': [{'code': '304292004',
-                                'display': 'Surgeon',
-                                'system': 'urn:oid:2.16.840.1.113883.4.642.2.420'}]} #Performer-Role
-            actors.append({'actor': ref, 'role': role})
+            ref = {
+                "display": surgeon.name.rec_name,
+                "reference": "/".join(["Practitioner", str(surgeon.id)]),
+            }
+            role = {
+                "text": "Surgeon",
+                "coding": [
+                    {
+                        "code": "304292004",
+                        "display": "Surgeon",
+                        "system": "urn:oid:2.16.840.1.113883.4.642.2.420",
+                    }
+                ],
+            }  # Performer-Role
+            actors.append({"actor": ref, "role": role})
 
         anesthetist = procedure.name.anesthetist
         if anesthetist:
-            ref = {'display': anesthetist.name.rec_name,
-                    'reference': ''.join(['Practitioner/', str(anesthetist.id)])}
-            role = {'text': 'Anesthetist',
-                    'coding': [{'code': '158970007',
-                                'display': 'Anesthetist',
-                                'system': 'urn:oid:2.16.840.1.113883.4.642.2.420'}]} #Performer-Role
-            actors.append({'actor': ref, 'role': role})
+            ref = {
+                "display": anesthetist.name.rec_name,
+                "reference": "".join(["Practitioner/", str(anesthetist.id)]),
+            }
+            role = {
+                "text": "Anesthetist",
+                "coding": [
+                    {
+                        "code": "158970007",
+                        "display": "Anesthetist",
+                        "system": "urn:oid:2.16.840.1.113883.4.642.2.420",
+                    }
+                ],
+            }  # Performer-Role
+            actors.append({"actor": ref, "role": role})
 
         for m in procedure.name.surgery_team:
-            ref = {'display': m.team_member.name.rec_name,
-                    'reference': ''.join(['Practitioner/', str(m.team_member.id)])}
-            role =  {}
+            ref = {
+                "display": m.team_member.name.rec_name,
+                "reference": "".join(["Practitioner/", str(m.team_member.id)]),
+            }
+            role = {}
             if m.role:
-                code, name = safe_attrgetter(m, 'role.specialty.code', 'role.specialty.name')
-                role = {'text': name,
-                        'coding': [{'code': code,
-                                    'display': name}]}
-            actors.append({'actor': ref, 'role': role or None})
-        if actors: jsondict['performer'] = actors
+                code, name = safe_attrgetter(
+                    m, "role.specialty.code", "role.specialty.name"
+                )
+                role = {"text": name, "coding": [{"code": code, "display": name}]}
+            actors.append({"actor": ref, "role": role or None})
+        if actors:
+            jsondict["performer"] = actors
 
-        #performedPeriod
-        start, end = safe_attrgetter(procedure, 'name.surgery_date', 'name.surgery_end_date')
+        # performedPeriod
+        start, end = safe_attrgetter(
+            procedure, "name.surgery_date", "name.surgery_end_date"
+        )
         if start is not None:
-            p = {'start': instance(start).to_iso8601_string()}
+            p = {"start": instance(start).to_iso8601_string()}
             if end is not None:
-                p['end'] = instance(end).to_iso8601_string()
-            jsondict['performedPeriod'] = p
+                p["end"] = instance(end).to_iso8601_string()
+            jsondict["performedPeriod"] = p
 
-        #location
+        # location
         # room = procedure.name.operating_room
         # (display=room.rec_name,
-                            # reference='/'.join(['Location', str(room.id)]))
+        # reference='/'.join(['Location', str(room.id)]))
 
-        #note
+        # note
         if procedure.name.extra_info:
-            jsondict['note'] = [ {'text': procedure.name.extra_info}]
+            jsondict["note"] = [{"text": procedure.name.extra_info}]
 
-        #usedCode
-        #TODO Use procedure.name.supplies
+        # usedCode
+        # TODO Use procedure.name.supplies
 
         return jsondict

@@ -2,80 +2,88 @@ from .utils import safe_attrgetter
 from pendulum import instance
 from fhirclient.models import diagnosticreport
 
-__all__ = ['DiagnosticReport']
+__all__ = ["DiagnosticReport"]
+
 
 class DiagnosticReport(diagnosticreport.DiagnosticReport):
-
     def __init__(self, report, **kwargs):
-        kwargs['jsondict'] = self._get_jsondict(report)
+        kwargs["jsondict"] = self._get_jsondict(report)
         super(DiagnosticReport, self).__init__(**kwargs)
 
     def _get_jsondict(self, report):
         jsondict = {}
 
-        #status
-        #TODO No clear correlate in Health (?)
-        jsondict['status'] = 'final'
+        # status
+        # TODO No clear correlate in Health (?)
+        jsondict["status"] = "final"
 
-        #effectiveDateTime
+        # effectiveDateTime
         t = report.date_analysis
-        if t: jsondict['effectiveDateTime'] = instance(t).to_is8601_string()
+        if t:
+            jsondict["effectiveDateTime"] = instance(t).to_is8601_string()
 
-        #identifier
-        #TODO Return more information
-        #patient = self.report.patient
-        #date = self.report.date_analysis
-        #report = self.report.test
+        # identifier
+        # TODO Return more information
+        # patient = self.report.patient
+        # date = self.report.date_analysis
+        # report = self.report.test
 
-        #if report and patient and date:
-            #label = '{0}: {1} on {2}'.format(report.name, patient.rec_name or '<unknown>', date.strftime('%Y-%m-%d'))
-        jsondict['identifier'] = [{'value': str(report.id),
-                                    'use': 'official'}]
+        # if report and patient and date:
+        # label = '{0}: {1} on {2}'.format(report.name, patient.rec_name or '<unknown>', date.strftime('%Y-%m-%d'))
+        jsondict["identifier"] = [{"value": str(report.id), "use": "official"}]
 
-        #code
-        #TODO Use LOINC coding
+        # code
+        # TODO Use LOINC coding
         test = report.test
         if test:
-            jsondict['code'] = {'coding': [{'display': test.name,
-                                            'code': test.code}]}
-        #issued
+            jsondict["code"] = {"coding": [{"display": test.name, "code": test.code}]}
+        # issued
         t = report.write_date
-        if t: jsondict['issued'] = instance(t).to_is8601_string()
+        if t:
+            jsondict["issued"] = instance(t).to_is8601_string()
 
-        #result
-        #TODO output actual observations, not links
+        # result
+        # TODO output actual observations, not links
         result = report.critearea
         references = []
         for test in result:
-            r = {'display': test.rec_name,
-                    'reference': ''.join(['Observation/', str(test.id)])}
+            r = {
+                "display": test.rec_name,
+                "reference": "".join(["Observation/", str(test.id)]),
+            }
             references.append(r)
-        if references: jsondict['result'] = references
+        if references:
+            jsondict["result"] = references
 
-        #performer
+        # performer
         performers = []
         path = report.pathologist
         tech = report.done_by
         if path:
-            r = {'display': path.name.rec_name,
-                    'reference': ''.join(['Practitioner/', str(path.id)])}
-            performers.append({'actor': r,
-                                'role': {'text': 'Pathologist'}})
+            r = {
+                "display": path.name.rec_name,
+                "reference": "".join(["Practitioner/", str(path.id)]),
+            }
+            performers.append({"actor": r, "role": {"text": "Pathologist"}})
         if tech:
-            r = {'display': tech.name.rec_name,
-                    'reference': ''.join(['Practitioner/', str(tech.id)])}
-            performers.append({'actor': r,
-                                'role': {'text': 'Technician'}})
-        if performers: jsondict['performer'] = performers
+            r = {
+                "display": tech.name.rec_name,
+                "reference": "".join(["Practitioner/", str(tech.id)]),
+            }
+            performers.append({"actor": r, "role": {"text": "Technician"}})
+        if performers:
+            jsondict["performer"] = performers
 
-        #subject
+        # subject
         subject = report.patient
         if subject:
-            r = {'display': subject.rec_name,
-                    'reference': ''.join(['Patient/', str(subject.id)])}
-            jsondict['subject'] = r
+            r = {
+                "display": subject.rec_name,
+                "reference": "".join(["Patient/", str(subject.id)]),
+            }
+            jsondict["subject"] = r
 
-        #conclusion
-        jsondict['conclusion'] = report.results or report.diagnosis
+        # conclusion
+        jsondict["conclusion"] = report.results or report.diagnosis
 
         return jsondict

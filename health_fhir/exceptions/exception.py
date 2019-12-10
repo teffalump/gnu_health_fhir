@@ -3,6 +3,7 @@ class GNUHealthError(Exception):
     Base GNU Health exception
     """
 
+
 class GNUHealthTypeError(GNUHealthError):
     """
     Exception raised when there is a type mismatch
@@ -12,6 +13,7 @@ class GNUHealthTypeError(GNUHealthError):
         if msg is None:
             msg = "{0} adapter cannot process this {1} model".format(adapter, model)
         super(GNUHealthTypeError, self).__init__(msg)
+
 
 class GNUHealthImportError(GNUHealthError):
     """
@@ -23,4 +25,5 @@ class GNUHealthImportError(GNUHealthError):
             msg = "Error importing {0} data from the model".format(attribute)
         super(GNUHealthImportError, self).__init__(msg)
 
-__all__=['GNUHealthError', 'GNUHealthTypeError', 'GNUHealthImportError']
+
+__all__ = ["GNUHealthError", "GNUHealthTypeError", "GNUHealthImportError"]

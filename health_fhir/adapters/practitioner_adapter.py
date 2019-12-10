@@ -1,6 +1,7 @@
 from operator import attrgetter
 from pendulum import instance
 from fhirclient.models.practitioner import Practitioner as fhir_practitioner
+from .base import BaseAdapter
 
 __all__ = ["Practitioner"]
 

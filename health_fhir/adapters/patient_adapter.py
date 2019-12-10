@@ -2,7 +2,7 @@ from .utils import safe_attrgetter
 from pendulum import instance
 from fhirclient.models.patient import Patient as fhir_patient
 from .base import BaseAdapter
-from ..value_sets import maritalStatus as ms
+from ..converters import maritalStatus as ms
 from re import sub
 
 __all__ = ["Patient"]

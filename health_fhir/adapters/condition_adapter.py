@@ -1,5 +1,5 @@
 from pendulum import instance
-from fhirclient.models.conditon import Conditon as fhir_condition
+from fhirclient.models.condition import Condition as fhir_condition
 from .base import BaseAdapter
 
 __all__ = ["Condition"]

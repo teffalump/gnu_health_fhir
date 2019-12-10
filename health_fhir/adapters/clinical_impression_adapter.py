@@ -1,6 +1,7 @@
 from .utils import safe_attrgetter
 from pendulum import instance
 from fhirclient.models.clinicalimpression import ClinicalImpression as fhir_impression
+from .base import BaseAdapter
 
 __all__ = ["ClinicalImpression"]
 
@@ -50,7 +51,7 @@ class ClinicalImpression(BaseAdapter):
         else:
             status = "unknown"
         return status
-    
+
     @classmethod
     def build_fhir_code(cls, impression):
         # TODO More information
@@ -62,7 +63,7 @@ class ClinicalImpression(BaseAdapter):
             "display": impression.code or "code_unknown",
             "reference": "".join(["Encounter/", str(impression.id)]),
         }
-    
+
     @classmethod
     def build_fhir_subject(cls, impression):
         try:
@@ -72,16 +73,16 @@ class ClinicalImpression(BaseAdapter):
             }
         except:
             return None
-    
+
     @classmethod
     def build_fhir_effective_datetime_or_period(cls, impression):
         try:
             start = instance(impression.evaluation_start).to_iso8601_string()
             if impression.evaluation_endtime:
                 end = instance(impression.evaluation_endtime).to_iso8601_string()
-                ["effectivePeriod"] = {"start": start, "end": end}
+                return {"start": start, "end": end}
             else:
-                jsondict["effectiveDateTime"] = start
+                return start
         except:
             return None
 

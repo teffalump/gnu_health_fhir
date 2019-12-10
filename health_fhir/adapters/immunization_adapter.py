@@ -2,7 +2,7 @@ from fhirclient.models.immunization import Immunization as fhir_immunization
 from pendulum import instance
 from .base import BaseAdapter
 from .utils import safe_attrgetter
-from ..value_sets import immunizationRoute, immunizationSite
+from ..converters import immunizationRoute, immunizationSite
 
 __all__ = ["Immunization"]
 

@@ -1,7 +1,7 @@
 from fhirclient.models.familymemberhistory import FamilyMemberHistory as fhir_fmh
 from pendulum import instance
 from .base import BaseAdapter
-from ..value_sets import familyMember
+from ..converters import familyMember
 
 __all__ = ["FamilyMemberHistory"]
 

@@ -30,6 +30,14 @@ class Encounter(BaseAdapter):
         return fhir_encounter(jsondict=jsondict)
 
     @classmethod
+    def get_fhir_resource_type(cls):
+        return "Encounter"
+
+    @classmethod
+    def get_fhir_object_id_from_gh_object(cls, enc):
+        return enc.id
+
+    @classmethod
     def build_fhir_identifier(cls, enc):
         if enc.code:
             return [{"value": enc.code}]

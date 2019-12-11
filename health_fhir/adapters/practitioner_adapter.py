@@ -19,49 +19,24 @@ class Practitioner(BaseAdapter):
         return fhir_practitioner(jsondict=jsondict)
 
     @classmethod
+    def get_fhir_resource_type(cls):
+        return "Practitioner"
+
+    @classmethod
+    def get_fhir_object_id_from_gh_object(cls, hp):
+        return hp.id
+
+    @classmethod
     def build_fhir_active(cls, hp):
         return hp.name.active
 
     @classmethod
     def build_fhir_telecom(cls, hp):
-        telecom = []
-        for contact in hp.name.contact_mechanisms:
-            c = {"value": contact.value}
-            if contact.type == "phone":
-                c["system"] = "phone"
-                c["use"] = "home"
-            elif contact.type == "mobile":
-                c["system"] = "phone"
-                c["use"] = "mobile"
-            else:
-                c["use"] = c["system"] = contact.type
-            telecom.append(c)
-        return telecom
+        return cls.build_fhir_telecom_for_person(hp.name)
 
     @classmethod
     def build_fhir_name(cls, hp):
-        names = []
-        for name in hp.name.person_names:
-            n = {}
-            n["given"] = [x for x in name.given.split()]
-            n["family"] = name.family
-            n["prefix"] = [name.prefix] if name.prefix else []
-            n["suffix"] = [name.suffix] if name.suffix else []
-            n["use"] = name.use
-            if name.date_from:
-                n["period"] = {"start": instance(name.date_from).to_iso8601_string()}
-                if name.date_to:
-                    n["period"]["end"] = instance(name.date_to).to_iso8601_string()
-            names.append(n)
-        if names:
-            return names
-        else:
-            # try in default fields
-            n = {}
-            n["given"] = [x for x in hp.name.name.split()]
-            n["family"] = hp.name.lastname
-            n["use"] = "official"
-            return [n]
+        return cls.build_fhir_name_for_person(hp.name)
 
     @classmethod
     def build_fhir_identifier(cls, hp):

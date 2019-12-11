@@ -27,6 +27,14 @@ class MedicationStatement(BaseAdapter):
         return fhir_med(jsondict=jsondict)
 
     @classmethod
+    def get_fhir_resource_type(cls):
+        return "MedicationStatement"
+
+    @classmethod
+    def get_fhir_object_id_from_gh_object(cls, med):
+        return med.id
+
+    @classmethod
     def build_fhir_identifier(cls, med):
         return [
             {
@@ -156,17 +164,13 @@ class MedicationStatement(BaseAdapter):
 
     @classmethod
     def build_fhir_reason_code(cls, med):
-        # Ideally should make indication connect to patient condition
-        reason = med.indication
+        # TODO Ideally should make indication connect to patient condition
         if reason:
-            cc = {"text": reason.name}
-            coding = {
-                "system": "urn:oid:2.16.840.1.113883.6.90",  # ICD-10-CM
-                "code": reason.code,
-                "display": reason.name,
-            }
-            cc["coding"] = [coding]
-            return [cc]
+            cls.build_codeable_concept(
+                med.indication.code,
+                "urn:oid:2.16.840.1.113883.6.90",  # ICD-10-CM
+                med.indication.name,
+            )
 
     @classmethod
     def build_fhir_effective_period(cls, med):

@@ -24,6 +24,14 @@ class Observation(BaseAdapter):
         return fhir_observation(jsondict=jsondict)
 
     @classmethod
+    def get_fhir_resource_type(cls):
+        return "Observation"
+
+    @classmethod
+    def get_fhir_object_id_from_gh_object(cls, observation):
+        return observation.id
+
+    @classmethod
     def build_fhir_comment(cls, observation):
         return observation.remarks
 
@@ -44,8 +52,6 @@ class Observation(BaseAdapter):
         upper_limit = observation.upper_limit
 
         if value is not None and lower_limit is not None and upper_limit is not None:
-            cc = {}
-            coding = {}
             if value < lower_limit:
                 v = "L"
                 d = "Low"
@@ -55,11 +61,7 @@ class Observation(BaseAdapter):
             else:
                 v = "N"
                 d = "Normal"
-            coding["system"] = "http://hl7.org/fhir/v2/0078"
-            coding["code"] = v
-            coding["display"] = cc["text"] = d
-            cc["coding"] = [coding]
-            return cc
+            return cls.build_codeable_concept(v, "http://hl7.org/fhir/v2/0078", d)
 
     @classmethod
     def build_fhir_issued(cls, observation):
@@ -70,11 +72,7 @@ class Observation(BaseAdapter):
     @classmethod
     def build_fhir_code(cls, observation):
         # TODO Better coding!!
-        code = observation.name
-        if code:
-            cc = {"text": code}
-            cc["coding"] = [{"code": code, "display": code}]
-            return cc
+        return cls.build_codeable_concept(code=observation.name, text=observation.name)
 
     @classmethod
     def build_fhir_performer(cls, observation):

@@ -32,6 +32,14 @@ class Immunization(BaseAdapter):
         return fhir_immunization(jsondict=jsondict)
 
     @classmethod
+    def get_fhir_resource_type(cls):
+        return "Immunization"
+
+    @classmethod
+    def get_fhir_object_id_from_gh_object(cls, vaccination):
+        return vaccination.id
+
+    @classmethod
     def build_fhir_identifier(cls, vaccination):
         return [
             {
@@ -135,12 +143,9 @@ class Immunization(BaseAdapter):
         if route:
             ir = [i for i in immunizationRoute.contents if i["code"] == route.upper()]
             if ir:
-                cc = {}
-                c = {}
-                c["display"] = cc["text"] = ir[0]["display"]
-                c["code"] = ir[0]["code"]
-                cc["coding"] = [c]
-                return cc
+                return cls.build_codeable_concept(
+                    code=ir[0]["code"], text=ir[0]["display"]
+                )
 
     @classmethod
     def build_fhir_site(cls, vaccination):
@@ -148,25 +153,16 @@ class Immunization(BaseAdapter):
         if site:
             m = [i for i in immunizationSite.contents if i["code"] == site.upper()]
             if m:
-                cc = {}
-                c = {}
-                c["display"] = cc["text"] = m[0]["display"]
-                c["code"] = m[0]["code"]
-                cc["coding"] = [c]
-                return cc
+                return cls.build_codeable_concept(
+                    code=m[0]["code"], text=m[0]["display"]
+                )
 
     @classmethod
     def build_fhir_vaccine_code(cls, vaccination):
-        # TODO Need better coding, much better!
+        # TODO Better coding information
         type_ = vaccination.vaccine
         if type_:
-            cc = {}
-            c = {}
-            c["display"] = cc["text"] = type_.rec_name
-            if type_.name.code:
-                c["code"] = type_.name.code
-                cc["coding"] = [c]
-            return cc
+            return cls.build_codeable_concept(code=type_.name.code, text=type_.rec_name)
 
     @classmethod
     def build_fhir_vaccination_protocol(cls, vaccination):

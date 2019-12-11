@@ -25,6 +25,14 @@ class Procedure(BaseAdapter):
         return fhir_procedure(jsondict=jsondict)
 
     @classmethod
+    def get_fhir_resource_type(cls):
+        return "Procedure"
+
+    @classmethod
+    def get_fhir_object_id_from_gh_object(cls, procedure):
+        return procedure.id
+
+    @classmethod
     def build_fhir_identifier(cls, procedure):
         return [
             {
@@ -62,15 +70,11 @@ class Procedure(BaseAdapter):
 
     @classmethod
     def build_fhir_code(cls, procedure):
-        cc = {}
-        c = {
-            "userSelected": False,
-            "system": "urn:oid:2.16.840.1.113883.6.4",
-            "code": procedure.procedure.name,
-        }  # ICD-10-PCS
-        cc["text"] = c["display"] = procedure.procedure.description.capitalize()
-        cc["coding"] = [c]
-        return cc
+        return cls.build_codeable_concept(
+            procedure.procedure.name,
+            "urn:oid:2.16.840.1.113883.6.4",
+            procedure.procedure.description.capitalize(),
+        )  # ICD-10-PCS
 
     @classmethod
     def build_fhir_not_done(cls, procedure):
@@ -79,16 +83,11 @@ class Procedure(BaseAdapter):
 
     @classmethod
     def build_fhir_reason_code(cls, procedure):
-        code = procedure.name.pathology
-        if code:
-            cc = {"text": code.name}
-            coding = {
-                "system": "urn:oid:2.16.840.1.113883.6.90",  # ICD-10-CM
-                "code": code.code,
-                "display": code.name,
-            }
-            cc["coding"] = [coding]
-            return [cc]
+        return cls.build_codeable_concept(
+            procedure.name.pathology.code,
+            "urn:oid:2.16.840.1.113883.6.90",  # ICD-10-CM
+            procedure.name.pathology.name,
+        )
 
     @classmethod
     def build_fhir_performer(cls, procedure):

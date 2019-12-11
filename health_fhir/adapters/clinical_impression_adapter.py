@@ -34,6 +34,14 @@ class ClinicalImpression(BaseAdapter):
         return fhir_impression(jsondict=jsondict)
 
     @classmethod
+    def get_fhir_object_id_from_gh_object(cls, impression):
+        return impression.id
+
+    @classmethod
+    def get_fhir_resource_type(cls):
+        return "ClinicalImpression"
+
+    @classmethod
     def build_fhir_identifier(cls, impression):
         try:
             return [{"value": impression.code}]

@@ -19,6 +19,14 @@ class Coverage(BaseAdapter):
         return fhir_coverage(jsondict=jsondict)
 
     @classmethod
+    def get_fhir_resource_type(cls):
+        return "Coverage"
+
+    @classmethod
+    def get_fhir_object_id_from_gh_object(cls, coverage):
+        return coverage.id
+
+    @classmethod
     def build_fhir_identifier(cls, coverage):
         return [{"value": coverage.number}]
 
@@ -45,7 +53,7 @@ class Coverage(BaseAdapter):
     def build_fhir_type(cls, coverage):
         # TODO There are preferred codes in FHIR
         if coverage.insurance_type:
-            return {"coding": [{"code": coverage.insurance_type}]}
+            return cls.build_codeable_concept(code=coverage.insurance_type)
 
     @classmethod
     def build_fhir_beneficiary(cls, coverage):

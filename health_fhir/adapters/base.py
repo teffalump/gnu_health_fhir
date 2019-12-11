@@ -36,7 +36,6 @@ class BaseAdapter:
     def delete(cls, gh_object):
         raise NotImplemented()
 
-
     ##### REFERENCE CONVERSIONS #####
 
     @classmethod
@@ -55,12 +54,14 @@ class BaseAdapter:
     @classmethod
     def build_fhir_reference_from_adapter_and_object(cls, adapter, gh_object):
         return {
-                "display": gh_object.rec_name,
-                "reference": "/".join([
-                                        adapter.get_fhir_resource_type(),
-                                        adapter.get_fhir_object_id_from_gh_object(gh_object)
-                                    ]),
-                }
+            "display": gh_object.rec_name,
+            "reference": "/".join(
+                [
+                    adapter.get_fhir_resource_type(),
+                    adapter.get_fhir_object_id_from_gh_object(gh_object),
+                ]
+            ),
+        }
 
     ##### HELPER METHODS #####
 

@@ -20,6 +20,14 @@ class FamilyMemberHistory(BaseAdapter):
         return fhir_fmh(jsondict=jsondict)
 
     @classmethod
+    def get_fhir_resource_type(cls):
+        return "FamilyMemberHistory"
+
+    @classmethod
+    def get_fhir_object_id_from_gh_object(cls, member):
+        return member.id
+
+    @classmethod
     def build_fhir_gender(cls, member):
         # TODO Turn into helper / config
         ### NOTE KEEP THIS UPDATED ###
@@ -71,19 +79,12 @@ class FamilyMemberHistory(BaseAdapter):
     @classmethod
     def build_fhir_relationship(cls, member):
         if member:
-            cc = {}
-            c = {}
-
             t = {"m": "maternal", "f": "paternal"}  # ignore sibling code
             k = " ".join((t.get(member.xory, ""), member.relative)).strip()
             info = [d for d in familyMember.contents if d["display"] == k]
 
             if info:
-                c["code"] = info[0]["code"]
-                c["system"] = info[0]["system"]
-            cc["text"] = c["display"] = k
-            cc["coding"] = [c]
-            return cc
+                return cls.build_codeable_concept(info[0]["code"], info[0]["system"], k)
 
     @classmethod
     def build_fhir_status(cls, member):
@@ -94,11 +95,8 @@ class FamilyMemberHistory(BaseAdapter):
     def build_fhir_condition(cls, member):
         path = member.name
         if path:
-            code = {}
-            coding = {
-                "code": path.code,
-                "system": "urn:oid:2.16.840.1.113883.6.90",
-            }  # ICD-10-CM
-            code["text"] = coding["display"] = path.name
-            code["coding"] = [coding]
-            return [{"code": code}]
+            return [
+                cls.build_codeable_concept(
+                    path.code, "urn:oid:2.16.840.1.113883.6.90", path.name  # ICD-10-CM
+                )
+            ]

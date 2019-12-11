@@ -22,6 +22,14 @@ class DiagnosticReport(BaseAdapter):
         return fhir_report(jsondict=jsondict)
 
     @classmethod
+    def get_fhir_resource_type(cls):
+        return "DiagnosticReport"
+
+    @classmethod
+    def get_fhir_object_id_from_gh_object(cls, report):
+        return report.id
+
+    @classmethod
     def build_fhir_status(cls, report):
         # TODO No clear correlate in Health (?)
         return "final"
@@ -49,7 +57,9 @@ class DiagnosticReport(BaseAdapter):
     def build_fhir_code(cls, report):
         # TODO Use LOINC coding
         try:
-            return {"coding": [{"display": report.test.name, "code": report.test.code}]}
+            return cls.build_codeable_concept(
+                code=report.test.code, text=report.test.name
+            )
         except:
             return None
 

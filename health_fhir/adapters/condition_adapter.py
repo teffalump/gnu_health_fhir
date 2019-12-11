@@ -21,6 +21,14 @@ class Condition(BaseAdapter):
         return fhir_condition(jsondict=jsondict)
 
     @classmethod
+    def get_fhir_resource_type(cls):
+        return "Condition"
+
+    @classmethod
+    def get_fhir_object_id_from_gh_object(cls, condition):
+        return condition.id
+
+    @classmethod
     def build_fhir_subject(cls, condition):
         patient = condition.name
         if patient:
@@ -80,24 +88,12 @@ class Condition(BaseAdapter):
             }
             t = sev.get(severity)
             if t:
-                cc = {"text": t[0]}
-                coding = {
-                    "display": t[0],
-                    "code": t[1],
-                    "system": "http://snomed.info/sct",
-                }
-                cc["coding"] = [coding]
-                return cc
+                return cls.build_codeable_concept(t[1], "http://snomed.info/sct", t[0])
 
     @classmethod
     def build_fhir_code(cls, condition):
         code = condition.pathology
         if code:
-            cc = {"text": code.name}
-            coding = {
-                "system": "urn:oid:2.16.840.1.113883.6.90",  # ICD-10-CM
-                "code": code.code,
-                "display": code.name,
-            }
-            cc["coding"] = [coding]
-            return cc
+            return cls.build_codeable_concept(
+                code.code, "urn:oid:2.16.840.1.113883.6.90", code.name  # ICD-10-CM
+            )

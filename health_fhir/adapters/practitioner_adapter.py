@@ -7,7 +7,6 @@ __all__ = ["Practitioner"]
 
 
 class Practitioner(BaseAdapter):
-
     @classmethod
     def to_fhir_object(cls, hp):
         jsondict = {}

@@ -7,7 +7,6 @@ __all__ = ["Observation"]
 
 
 class Observation(BaseAdapter):
-
     @classmethod
     def to_fhir_object(cls, observation):
         jsondict = {}
@@ -27,7 +26,6 @@ class Observation(BaseAdapter):
     @classmethod
     def build_fhir_comment(cls, observation):
         return observation.remarks
-
 
     @classmethod
     def build_fhir_identifier(cls, observation):

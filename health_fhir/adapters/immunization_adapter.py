@@ -8,7 +8,6 @@ __all__ = ["Immunization"]
 
 
 class Immunization(BaseAdapter):
-
     @classmethod
     def to_fhir_object(cls, vaccination):
         # TODO reaction - Must be reference in standard, but stored as text
@@ -17,7 +16,7 @@ class Immunization(BaseAdapter):
         jsondict["date"] = cls.build_fhir_date(vaccination)
         jsondict["notGiven"] = cls.build_fhir_not_given(vaccination)
         jsondict["status"] = cls.build_fhir_status(vaccination)
-        jsondict["patient"] = cls.build_fhir_status(vaccination)
+        jsondict["patient"] = cls.build_fhir_patient(vaccination)
         jsondict["practitioner"] = cls.build_fhir_practitioner(vaccination)
         jsondict["lotNumber"] = cls.build_fhir_lot_number(vaccination)
         jsondict["expirationDate"] = cls.build_fhir_expiration_date(vaccination)
@@ -26,12 +25,15 @@ class Immunization(BaseAdapter):
         jsondict["route"] = cls.build_fhir_route(vaccination)
         jsondict["site"] = cls.build_fhir_site(vaccination)
         jsondict["vaccineCode"] = cls.build_fhir_vaccine_code(vaccination)
-        jsondict["vaccinationProtocol"] = cls.build_fhir_vaccination_protocol(vaccination)
+        jsondict["primarySource"] = cls.build_fhir_primary_source(vaccination)
+        jsondict["vaccinationProtocol"] = cls.build_fhir_vaccination_protocol(
+            vaccination
+        )
         return fhir_immunization(jsondict=jsondict)
 
     @classmethod
     def build_fhir_identifier(cls, vaccination):
-       return [
+        return [
             {
                 "use": "official",
                 "value": "-".join([vaccination.vaccine.rec_name, str(vaccination.id)]),
@@ -111,18 +113,20 @@ class Immunization(BaseAdapter):
         if notes:
             return {"text": notes}
 
-        # reportOrigin and primarySource
+    @classmethod
+    def build_fhir_primary_source(cls, vaccination):
         # DEBUG If there is no attached administered healthprof,
         #   AND no reasonable documents then self-reported (?)
         administer = vaccination.healthprof
         asserter = vaccination.signed_by
         if administer is None and asserter is None:
-            jsondict["reportOrigin"] = {"text": "Self-reported"}
-            jsondict["primarySource"] = False
+            # return {"text": "Self-reported"}, False
+            # jsondict["reportOrigin"] = {"text": "Self-reported"}
+            # jsondict["primarySource"] = False
+            return False
         else:
             # don't need to populate if primary source per standard
-            # cc = {'text': 'Health professional asserter'}
-            jsondict["primarySource"] = True
+            return True
 
     @classmethod
     def build_fhir_route(cls, vaccination):
@@ -163,7 +167,6 @@ class Immunization(BaseAdapter):
                 c["code"] = type_.name.code
                 cc["coding"] = [c]
             return cc
-
 
     @classmethod
     def build_fhir_vaccination_protocol(cls, vaccination):

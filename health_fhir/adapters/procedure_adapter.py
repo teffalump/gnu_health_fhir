@@ -7,7 +7,6 @@ __all__ = ["Procedure"]
 
 
 class Procedure(BaseAdapter):
-
     @classmethod
     def to_fhir_object(cls, procedure):
         # TODO category
@@ -27,10 +26,12 @@ class Procedure(BaseAdapter):
 
     @classmethod
     def build_fhir_identifier(cls, procedure):
-        return [{
-            "use": "official",
-            "value": "-".join([procedure.procedure.name, str(procedure.id)]),
-        }]
+        return [
+            {
+                "use": "official",
+                "value": "-".join([procedure.procedure.name, str(procedure.id)]),
+            }
+        ]
 
     @classmethod
     def build_fhir_subject(cls, procedure):
@@ -141,7 +142,7 @@ class Procedure(BaseAdapter):
                 role = {"text": name, "coding": [{"code": code, "display": name}]}
             actors.append({"actor": ref, "role": role or None})
         return actors
-        
+
     @classmethod
     def build_fhir_performed_period(cls, procedure):
         start, end = safe_attrgetter(
@@ -152,7 +153,7 @@ class Procedure(BaseAdapter):
             if end is not None:
                 period["end"] = instance(end).to_iso8601_string()
             return period
-        
+
     @classmethod
     def build_fhir_note(cls, procedure):
         if procedure.name.extra_info:

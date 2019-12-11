@@ -7,7 +7,6 @@ __all__ = ["MedicationStatement"]
 
 
 class MedicationStatement(BaseAdapter):
-
     @classmethod
     def to_fhir_object(cls, med):
         # TODO informationSource #See if we can determine this in Health?
@@ -22,7 +21,9 @@ class MedicationStatement(BaseAdapter):
         jsondict["reasonCode"] = cls.build_fhir_reason_code(med)
         jsondict["effectivePeriod"] = cls.build_fhir_effective_period(med)
         jsondict["note"] = cls.build_fhir_note(med)
-        jsondict["medicationCodeableConcept"] = cls.build_fhir_medication_codeable_concept(med)
+        jsondict[
+            "medicationCodeableConcept"
+        ] = cls.build_fhir_medication_codeable_concept(med)
         return fhir_med(jsondict=jsondict)
 
     @classmethod
@@ -41,7 +42,6 @@ class MedicationStatement(BaseAdapter):
             "display": subject.name.rec_name,
             "reference": "/".join(["Patient", str(subject.id)]),
         }
-
 
     @classmethod
     def build_fhir_date_asserted(cls, med):
@@ -152,9 +152,7 @@ class MedicationStatement(BaseAdapter):
     @classmethod
     def build_fhir_reason_not_taken(cls, med):
         if med.discontinued:
-            return {
-                "text": med.discontinued_reason or "<unknown>"
-            }
+            return {"text": med.discontinued_reason or "<unknown>"}
 
     @classmethod
     def build_fhir_reason_code(cls, med):

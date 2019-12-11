@@ -24,14 +24,16 @@ class Encounter(BaseAdapter):
         jsondict["length"] = cls.build_fhir_length(enc)
         jsondict["status"] = cls.build_fhir_status(enc)
         jsondict["identifier"] = cls.build_fhir_identifier(enc)
-        jsondict["reason"], jsondict["diagnosis"] = cls.build_fhir_reason_and_diagnosis(enc)
+        jsondict["reason"], jsondict["diagnosis"] = cls.build_fhir_reason_and_diagnosis(
+            enc
+        )
         return fhir_encounter(jsondict=jsondict)
 
     @classmethod
     def build_fhir_identifier(cls, enc):
         if enc.code:
             return [{"value": enc.code}]
-    
+
     @classmethod
     def build_fhir_status(cls, enc):
         # GNU Health states - in_progress, done, signed, None
@@ -58,7 +60,7 @@ class Encounter(BaseAdapter):
         elif enc.evaluation_type == "inpatient":
             return {"code": "IMP", "display": "inpatient encounter"}
         else:
-            return None # TODO
+            return None  # TODO
 
     @classmethod
     def build_fhir_type(cls, enc):
@@ -133,9 +135,9 @@ class Encounter(BaseAdapter):
         # Period
         period = {}
         if enc.evaluation_start:
-            period["start"] = instance(enc.evaluation_start).to_is8601_string()
+            period["start"] = instance(enc.evaluation_start).to_iso8601_string()
         if enc.evaluation_endtime:
-            period["end"] = instance(enc.evaluation_endtime).to_is8601_string()
+            period["end"] = instance(enc.evaluation_endtime).to_iso8601_string()
         if period:
             return period
 

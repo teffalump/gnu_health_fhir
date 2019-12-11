@@ -7,7 +7,6 @@ __all__ = ["DiagnosticReport"]
 
 
 class DiagnosticReport(BaseAdapter):
-
     @classmethod
     def to_fhir_object(cls, report):
         jsondict = {}
@@ -21,7 +20,7 @@ class DiagnosticReport(BaseAdapter):
         jsondict["subject"] = cls.build_fhir_subject(report)
         jsondict["conclusion"] = cls.build_fhir_conclusion(report)
         return fhir_report(jsondict=jsondict)
-        
+
     @classmethod
     def build_fhir_status(cls, report):
         # TODO No clear correlate in Health (?)
@@ -30,7 +29,7 @@ class DiagnosticReport(BaseAdapter):
     @classmethod
     def build_fhir_effective_datetime(cls, report):
         try:
-            return instance(report.date_analysis).to_is8601_string()
+            return instance(report.date_analysis).to_iso8601_string()
         except:
             return None
 
@@ -57,7 +56,7 @@ class DiagnosticReport(BaseAdapter):
     @classmethod
     def build_fhir_issued(cls, report):
         try:
-            return instance(report.write_date).to_is8601_string()
+            return instance(report.write_date).to_iso8601_string()
         except:
             return None
 
@@ -65,7 +64,7 @@ class DiagnosticReport(BaseAdapter):
     def build_fhir_result(cls, report):
         # TODO output actual observations, not links
         references = []
-        for test in result.report.critearea:
+        for test in report.critearea:
             r = {
                 "display": test.rec_name,
                 "reference": "".join(["Observation/", str(test.id)]),
@@ -96,9 +95,9 @@ class DiagnosticReport(BaseAdapter):
     def build_fhir_subject(cls, report):
         try:
             return {
-                    "display": report.patient.rec_name,
-                    "reference": "".join(["Patient/", str(report.patient.id)]),
-                }
+                "display": report.patient.rec_name,
+                "reference": "".join(["Patient/", str(report.patient.id)]),
+            }
         except:
             return None
 

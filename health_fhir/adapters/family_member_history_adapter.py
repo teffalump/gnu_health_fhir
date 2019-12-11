@@ -7,7 +7,6 @@ __all__ = ["FamilyMemberHistory"]
 
 
 class FamilyMemberHistory(BaseAdapter):
-
     @classmethod
     def to_fhir_object(cls, member):
         # TODO Add more info to family history data model on Health side
@@ -68,7 +67,6 @@ class FamilyMemberHistory(BaseAdapter):
                 "display": patient.rec_name,
                 "reference": "".join(["Patient/", str(patient.id)]),
             }
-
 
     @classmethod
     def build_fhir_relationship(cls, member):

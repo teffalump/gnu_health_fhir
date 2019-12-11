@@ -1,4 +1,5 @@
-__all__=["BaseAdapter"]
+__all__ = ["BaseAdapter"]
+
 
 class BaseAdapter:
     """The base adapter class:
@@ -14,7 +15,6 @@ class BaseAdapter:
     @classmethod
     def to_health_object(cls, fhir_object):
         raise NotImplemented()
-
 
     ###### CRUD #######
     @classmethod
@@ -32,6 +32,5 @@ class BaseAdapter:
     @classmethod
     def delete(cls, gh_object):
         raise NotImplemented()
-
 
     ##### HELPER CLASSES #####

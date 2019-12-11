@@ -14,6 +14,7 @@ class ClinicalImpression(BaseAdapter):
         - roundings
         - ambulatory care
     """
+
     @classmethod
     def to_fhir_object(cls, impression):
         jsondict = {}
@@ -25,7 +26,7 @@ class ClinicalImpression(BaseAdapter):
             jsondict["effectivePeriod"] = dt_or_period
         else:
             jsondict["effectiveDateTime"] = dt_or_period
-        jsondict["context"] = cls.build_fhir_code(impression)
+        jsondict["context"] = cls.build_fhir_context(impression)
         jsondict["subject"] = cls.build_fhir_subject(impression)
         jsondict["assessor"] = cls.build_fhir_assessor(impression)
         jsondict["date"] = cls.build_fhir_date(impression)
@@ -67,7 +68,7 @@ class ClinicalImpression(BaseAdapter):
     @classmethod
     def build_fhir_subject(cls, impression):
         try:
-           return {
+            return {
                 "display": impression.patient.rec_name,
                 "reference": "".join(["Patient/", str(impression.patient.id)]),
             }
@@ -126,4 +127,3 @@ class ClinicalImpression(BaseAdapter):
         # Other misc garbage
         # extras = [{'text': x} for x in safe_attrgetter(note, 'notes', 'notes_complaint', 'info_diagnosis', default='') if x.strip()]
         # if extras: jsondict['note'] = extras
-

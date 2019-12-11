@@ -9,7 +9,6 @@ __all__ = ["Patient"]
 
 
 class Patient(BaseAdapter):
-
     @classmethod
     def to_fhir_object(cls, patient):
         # TODO Add general_info field - where appropriate?
@@ -22,7 +21,7 @@ class Patient(BaseAdapter):
         jsondict["telecom"] = cls.build_fhir_telecom(patient)
         jsondict["birthDate"] = cls.build_fhir_birthdate(patient)
         jsondict["deceasedBoolean"] = cls.build_fhir_deceased_boolean(patient)
-        jsondict["deceasedDateTime"] = cls.build_fhir_deceased_dateTime(patient)
+        jsondict["deceasedDateTime"] = cls.build_fhir_deceased_datetime(patient)
         jsondict["address"] = cls.build_fhir_address(patient)
         jsondict["gender"] = cls.build_fhir_gender(patient)
         jsondict["generalPractitioner"] = cls.build_fhir_general_practitioner(patient)
@@ -167,7 +166,6 @@ class Patient(BaseAdapter):
 
             return [ad]
 
-
     @classmethod
     def build_fhir_active(cls, patient):
         return patient.name.active
@@ -183,7 +181,6 @@ class Patient(BaseAdapter):
             }
             return [r]
 
-
     @classmethod
     def build_fhir_communication(cls, patient):
         lang = patient.name.lang
@@ -197,7 +194,6 @@ class Patient(BaseAdapter):
             cc["coding"] = [c]
             com = {"preferred": "true", "language": cc}
             return [com]
-
 
         # import base64
         # if patient.name.photo:

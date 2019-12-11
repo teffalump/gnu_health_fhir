@@ -75,7 +75,7 @@ class BaseAdapter:
             if text:
                 coding["display"] = text
             coding["code"] = str(code)
-            codeable_concept = {"coding": coding}
+            codeable_concept = {"coding": [coding]}
         if text:
             codeable_concept["text"] = text
         return codeable_concept

@@ -114,7 +114,7 @@ class MedicationStatement(BaseAdapter):
         timing = {}
         if med.frequency:  # prefer specific information
             rep = {}
-            if med.duration_period is not "indefinite":
+            if med.duration_period != "indefinite":
                 rep["duration"] = med.duration
                 rep["durationUnits"] = code_conv.get(med.duration_period)
 

@@ -1,5 +1,5 @@
 from .utils import safe_attrgetter
-from pendulum import instance
+from pendulum import instance, parse
 from fhirclient.models.patient import Patient as fhir_patient
 from .base import BaseAdapter
 from ..converters import maritalStatus as ms
@@ -31,6 +31,14 @@ class Patient(BaseAdapter):
         return fhir_patient(jsondict=jsondict)
 
     @classmethod
+    def get_fhir_object_id_from_gh_object(cls, patient):
+        return patient.id
+
+    @classmethod
+    def get_fhir_resource_type(cls):
+        return "Patient"
+
+    @classmethod
     def build_fhir_identifier(cls, patient):
         idents = []
         if patient.puid:
@@ -51,44 +59,15 @@ class Patient(BaseAdapter):
 
     @classmethod
     def build_fhir_name(cls, patient):
-        # TODO Make helper function
-        names = []
-        for name in patient.name.person_names:
-            n = {}
-            n["given"] = [x for x in name.given.split()]
-            n["family"] = name.family if name.family else "<unknown>"
-            n["prefix"] = [name.prefix] if name.prefix else []
-            n["suffix"] = [name.suffix] if name.suffix else []
-            n["use"] = name.use if name.use else "<unknown>"
-            if name.date_from:
-                n["period"] = {"start": instance(name.date_from).to_iso8601_string()}
-                if name.date_to:
-                    n["period"]["end"] = instance(name.date_to).to_iso8601_string()
-            names.append(n)
-        return names
+        return cls.build_fhir_name_for_person(patient.name)
 
     @classmethod
     def build_fhir_telecom(cls, patient):
-        # TODO Make helper function
-        telecom = []
-        for contact in patient.name.contact_mechanisms:
-            c = {}
-            c["value"] = contact.value
-            if contact.type == "phone":
-                c["system"] = "phone"
-                c["use"] = "home"
-            elif contact.type == "mobile":
-                c["system"] = "phone"
-                c["use"] = "mobile"
-            else:
-                c["use"] = c["system"] = contact.type
-            telecom.append(c)
-
-        return telecom
+        return cls.build_fhir_telecom_for_person(patient.name)
 
     @classmethod
     def build_fhir_gender(cls, patient):
-        # Gender
+        # TODO Mate helper function
         # NOTE This is a difficult decision - what is gender for record-keeping
         # Currently, simply take biological sex and make further decisions later
         bs = patient.biological_sex
@@ -172,7 +151,6 @@ class Patient(BaseAdapter):
 
     @classmethod
     def build_fhir_general_practitioner(cls, patient):
-        # generalPractitioner
         pcp = patient.primary_care_doctor
         if pcp:
             r = {

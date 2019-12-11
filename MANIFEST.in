@@ -1,3 +1,5 @@
 include README.md
 include LICENSE
 include health_fhir/VERSION
+include requirements.txt
+include dev-requirements.txt

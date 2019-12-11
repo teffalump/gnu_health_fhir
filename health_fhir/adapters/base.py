@@ -1,10 +1,13 @@
+from pendulum import instance, parse
+
 __all__ = ["BaseAdapter"]
 
 
 class BaseAdapter:
     """The base adapter class:
             - defines multiple functions to be implemented by child classes (CRUD)
-            - provides helper functions to covert between object types
+            - conversion methods
+            - helper methods
     """
 
     ##### CONVERSION ######
@@ -33,4 +36,81 @@ class BaseAdapter:
     def delete(cls, gh_object):
         raise NotImplemented()
 
-    ##### HELPER CLASSES #####
+
+    ##### REFERENCE CONVERSIONS #####
+
+    @classmethod
+    def get_fhir_object_id_from_gh_object(cls, gh_object):
+        raise NotImplemented("Each adapter should implement this method")
+
+    @classmethod
+    def get_fhir_resource_type(cls):
+        raise NotImplemented("Each adapter should implement this method")
+
+    @classmethod
+    def get_gh_object_from_fhir_reference(cls, reference):
+        """Assume <Resource>/<id>"""
+        raise NotImplemented()
+
+    @classmethod
+    def build_fhir_reference_from_adapter_and_object(cls, adapter, gh_object):
+        return {
+                "display": gh_object.rec_name,
+                "reference": "/".join([
+                                        adapter.get_fhir_resource_type(),
+                                        adapter.get_fhir_object_id_from_gh_object(gh_object)
+                                    ]),
+                }
+
+    ##### HELPER METHODS #####
+
+    @classmethod
+    def build_codeable_concept(cls, code, system=None, text=None):
+        codeable_concept = {}
+        if code:
+            coding = {}
+            if system:
+                coding["system"] = system
+            if text:
+                coding["display"] = text
+            coding["code"] = str(code)
+            codeable_concept = {"coding": coding}
+        if text:
+            codeable_concept["text"] = text
+        return codeable_concept
+
+    @classmethod
+    def build_fhir_name_for_person(cls, gh_person_object):
+        """Assumes model from party.party"""
+        names = []
+        for name in gh_person_object.person_names:
+            n = {}
+            n["given"] = [x for x in name.given.split()]
+            n["family"] = name.family if name.family else "<unknown>"
+            n["prefix"] = [name.prefix] if name.prefix else []
+            n["suffix"] = [name.suffix] if name.suffix else []
+            n["use"] = name.use if name.use else "<unknown>"
+            if name.date_from:
+                n["period"] = {"start": parse(str(name.date_from)).to_iso8601_string()}
+                if name.date_to:
+                    n["period"]["end"] = parse(str(name.date_to)).to_iso8601_string()
+            names.append(n)
+        return names
+
+    @classmethod
+    def build_fhir_telecom_for_person(cl, gh_person_object):
+        """Assumes model from party.party"""
+        telecom = []
+        for contact in gh_person_object.contact_mechanisms:
+            c = {}
+            c["value"] = contact.value
+            if contact.type == "phone":
+                c["system"] = "phone"
+                c["use"] = "home"
+            elif contact.type == "mobile":
+                c["system"] = "phone"
+                c["use"] = "mobile"
+            else:
+                c["use"] = c["system"] = contact.type
+            telecom.append(c)
+        return telecom

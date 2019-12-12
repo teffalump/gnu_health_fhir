@@ -53,12 +53,14 @@ class BaseAdapter:
 
     @classmethod
     def build_fhir_reference_from_adapter_and_object(cls, adapter, gh_object):
+        if gh_object is None:
+            return None
         return {
             "display": gh_object.rec_name,
             "reference": "/".join(
                 [
                     adapter.get_fhir_resource_type(),
-                    adapter.get_fhir_object_id_from_gh_object(gh_object),
+                    str(adapter.get_fhir_object_id_from_gh_object(gh_object)),
                 ]
             ),
         }

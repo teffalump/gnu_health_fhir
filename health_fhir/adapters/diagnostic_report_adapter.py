@@ -2,6 +2,9 @@ from .utils import safe_attrgetter
 from pendulum import instance
 from fhirclient.models.diagnosticreport import DiagnosticReport as fhir_report
 from .base import BaseAdapter
+from .practitioner_adapter import Practitioner
+from .patient_adapter import Patient
+from .observation_adapter import Observation
 
 __all__ = ["DiagnosticReport"]
 
@@ -73,14 +76,10 @@ class DiagnosticReport(BaseAdapter):
     @classmethod
     def build_fhir_result(cls, report):
         # TODO output actual observations, not links
-        references = []
-        for test in report.critearea:
-            r = {
-                "display": test.rec_name,
-                "reference": "".join(["Observation/", str(test.id)]),
-            }
-            references.append(r)
-        return references
+        return [
+            cls.build_fhir_reference_from_adapter_and_object(Observation, test)
+            for test in report.critearea
+        ]
 
     @classmethod
     def build_fhir_performer(cls, report):
@@ -88,28 +87,28 @@ class DiagnosticReport(BaseAdapter):
         path = report.pathologist
         tech = report.done_by
         if path:
-            r = {
-                "display": path.name.rec_name,
-                "reference": "".join(["Practitioner/", str(path.id)]),
-            }
-            performers.append({"actor": r, "role": {"text": "Pathologist"}})
+            performers.append(
+                {
+                    "actor": cls.build_fhir_reference_from_adapter_and_object(
+                        Practitioner, path
+                    ),
+                    "role": {"text": "Pathologist"},
+                }
+            )
         if tech:
-            r = {
-                "display": tech.name.rec_name,
-                "reference": "".join(["Practitioner/", str(tech.id)]),
-            }
-            performers.append({"actor": r, "role": {"text": "Technician"}})
+            performers.append(
+                {
+                    "actor": cls.build_fhir_reference_from_adapter_and_object(
+                        Practitioner, tech
+                    ),
+                    "role": {"text": "Technician"},
+                }
+            )
         return performers
 
     @classmethod
     def build_fhir_subject(cls, report):
-        try:
-            return {
-                "display": report.patient.rec_name,
-                "reference": "".join(["Patient/", str(report.patient.id)]),
-            }
-        except:
-            return None
+        cls.build_fhir_reference_from_adapter_and_object(Patient, report.patient)
 
     @classmethod
     def build_fhir_conclusion(cls, report):

@@ -2,6 +2,8 @@ from .utils import safe_attrgetter
 from pendulum import instance
 from fhirclient.models.procedure import Procedure as fhir_procedure
 from .base import BaseAdapter
+from .patient_adapter import Patient
+from .practitioner_adapter import Practitioner
 
 __all__ = ["Procedure"]
 
@@ -44,11 +46,9 @@ class Procedure(BaseAdapter):
     @classmethod
     def build_fhir_subject(cls, procedure):
         try:
-            subject = procedure.name.patient
-            return {
-                "display": subject.name.rec_name,
-                "reference": "".join(["Patient/", str(subject.id)]),
-            }
+            return cls.build_fhir_reference_from_adapter_and_object(
+                Patient, procedure.name.patient
+            )
         except:
             return None
 
@@ -83,63 +83,44 @@ class Procedure(BaseAdapter):
 
     @classmethod
     def build_fhir_reason_code(cls, procedure):
-        return cls.build_codeable_concept(
+        return [cls.build_codeable_concept(
             procedure.name.pathology.code,
             "urn:oid:2.16.840.1.113883.6.90",  # ICD-10-CM
             procedure.name.pathology.name,
-        )
+        )]
 
     @classmethod
     def build_fhir_performer(cls, procedure):
         actors = []
         surgeon = procedure.name.surgeon
         if surgeon:
-            ref = {
-                "display": surgeon.name.rec_name,
-                "reference": "/".join(["Practitioner", str(surgeon.id)]),
-            }
-            role = {
-                "text": "Surgeon",
-                "coding": [
-                    {
-                        "code": "304292004",
-                        "display": "Surgeon",
-                        "system": "urn:oid:2.16.840.1.113883.4.642.2.420",
-                    }
-                ],
-            }  # Performer-Role
+            ref = cls.build_fhir_reference_from_adapter_and_object(
+                Practitioner, surgeon
+            )
+            role = cls.build_codeable_concept(
+                "304292004", "urn:oid:2.16.840.1.113883.4.642.2.420", "Surgeon"
+            )
             actors.append({"actor": ref, "role": role})
 
         anesthetist = procedure.name.anesthetist
         if anesthetist:
-            ref = {
-                "display": anesthetist.name.rec_name,
-                "reference": "".join(["Practitioner/", str(anesthetist.id)]),
-            }
-            role = {
-                "text": "Anesthetist",
-                "coding": [
-                    {
-                        "code": "158970007",
-                        "display": "Anesthetist",
-                        "system": "urn:oid:2.16.840.1.113883.4.642.2.420",
-                    }
-                ],
-            }  # Performer-Role
+            ref = cls.build_fhir_reference_from_adapter_and_object(
+                Practitioner, anesthetist
+            )
+            role = cls.build_codeable_concept(
+                "158970007", "urn:oid:2.16.840.1.113883.4.642.2.420", "Anesthetist"
+            )
             actors.append({"actor": ref, "role": role})
-
         for m in procedure.name.surgery_team:
-            ref = {
-                "display": m.team_member.name.rec_name,
-                "reference": "".join(["Practitioner/", str(m.team_member.id)]),
-            }
-            role = {}
+            ref = cls.build_fhir_reference_from_adapter_and_object(Practitioner, m)
             if m.role:
                 code, name = safe_attrgetter(
                     m, "role.specialty.code", "role.specialty.name"
                 )
-                role = {"text": name, "coding": [{"code": code, "display": name}]}
-            actors.append({"actor": ref, "role": role or None})
+                role = cls.build_codeable_concept(code=code, text=name)
+                actors.append({"actor": ref, "role": role})
+            else:
+                actors.append({"actor": ref})
         return actors
 
     @classmethod

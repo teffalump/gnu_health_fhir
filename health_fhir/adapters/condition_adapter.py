@@ -1,6 +1,8 @@
 from pendulum import instance, parse
 from fhirclient.models.condition import Condition as fhir_condition
 from .base import BaseAdapter
+from .patient_adapter import Patient
+from .practitioner_adapter import Practitioner
 
 __all__ = ["Condition"]
 
@@ -30,21 +32,13 @@ class Condition(BaseAdapter):
 
     @classmethod
     def build_fhir_subject(cls, condition):
-        patient = condition.name
-        if patient:
-            return {
-                "display": patient.rec_name,
-                "reference": "".join(["Patient/", str(patient.id)]),
-            }
+        return cls.build_fhir_reference_from_adapter_and_object(Patient, condition.name)
 
     @classmethod
     def build_fhir_asserter(cls, condition):
-        asserter = condition.healthprof
-        if asserter:
-            return {
-                "display": asserter.rec_name,
-                "reference": "".join(["Practitioner/", str(asserter.id)]),
-            }
+        return cls.build_fhir_reference_from_adapter_and_object(
+            Practitioner, condition.healthprof
+        )
 
     @classmethod
     def build_fhir_asserted_date(cls, condition):

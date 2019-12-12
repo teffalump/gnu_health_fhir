@@ -2,6 +2,10 @@ from .utils import safe_attrgetter
 from pendulum import instance
 from fhirclient.models.clinicalimpression import ClinicalImpression as fhir_impression
 from .base import BaseAdapter
+from .patient_adapter import Patient
+from .encounter_adapter import Encounter
+from .practitioner_adapter import Practitioner
+
 
 __all__ = ["ClinicalImpression"]
 
@@ -68,20 +72,13 @@ class ClinicalImpression(BaseAdapter):
 
     @classmethod
     def build_fhir_context(cls, impression):
-        return {
-            "display": impression.code or "code_unknown",
-            "reference": "".join(["Encounter/", str(impression.id)]),
-        }
+        return cls.build_fhir_reference_from_adapter_and_object(Encounter, impression)
 
     @classmethod
     def build_fhir_subject(cls, impression):
-        try:
-            return {
-                "display": impression.patient.rec_name,
-                "reference": "".join(["Patient/", str(impression.patient.id)]),
-            }
-        except:
-            return None
+        return cls.build_fhir_reference_from_adapter_and_object(
+            Patient, impression.patient
+        )
 
     @classmethod
     def build_fhir_effective_datetime_or_period(cls, impression):
@@ -97,13 +94,9 @@ class ClinicalImpression(BaseAdapter):
 
     @classmethod
     def build_fhir_assessor(cls, impression):
-        try:
-            return {
-                "display": impression.healthprof.rec_name,
-                "reference": "".join(["Practitioner/", str(impression.healthprof.id)]),
-            }
-        except:
-            return None
+        return cls.build_fhir_reference_from_adapter_and_object(
+            Practitioner, impression.healthprof
+        )
 
     @classmethod
     def build_fhir_date(cls, impression):

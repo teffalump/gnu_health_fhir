@@ -2,6 +2,9 @@ from .utils import safe_attrgetter
 from pendulum import instance
 from fhirclient.models.encounter import Encounter as fhir_encounter
 from .base import BaseAdapter
+from .patient_adapter import Patient
+from .practitioner_adapter import Practitioner
+from .condition_adapter import Condition
 
 __all__ = ["Encounter"]
 
@@ -24,9 +27,8 @@ class Encounter(BaseAdapter):
         jsondict["length"] = cls.build_fhir_length(enc)
         jsondict["status"] = cls.build_fhir_status(enc)
         jsondict["identifier"] = cls.build_fhir_identifier(enc)
-        jsondict["reason"], jsondict["diagnosis"] = cls.build_fhir_reason_and_diagnosis(
-            enc
-        )
+        # jsondict["reasonCode"] = cls.build_fhir_reason_code(enc)
+        jsondict["diagnosis"] = cls.build_fhir_diagnosis(enc)
         return fhir_encounter(jsondict=jsondict)
 
     @classmethod
@@ -104,11 +106,7 @@ class Encounter(BaseAdapter):
 
     @classmethod
     def build_fhir_subject(cls, enc):
-        if enc.patient:
-            return {
-                "display": enc.patient.rec_name,
-                "reference": "".join(["Patient/", str(enc.patient.id)]),
-            }
+        return cls.build_fhir_reference_from_adapter_and_object(Patient, enc.patient)
 
     @classmethod
     def build_fhir_participant(cls, enc):
@@ -117,19 +115,17 @@ class Encounter(BaseAdapter):
         if enc.signed_by:
             parts.append(
                 {
-                    "individual": {
-                        "display": enc.signed_by.rec_name,
-                        "reference": "".join(["Practitioner/", str(enc.signed_by.id)]),
-                    }
+                    "individual": cls.build_fhir_reference_from_adapter_and_object(
+                        Practitioner, enc.signed_by
+                    )
                 }
             )
         if enc.healthprof:
             parts.append(
                 {
-                    "individual": {
-                        "display": enc.healthprof.rec_name,
-                        "reference": "".join(["Practitioner/", str(enc.healthprof.id)]),
-                    }
+                    "individual": cls.build_fhir_reference_from_adapter_and_object(
+                        Practitioner, enc.healthprof
+                    )
                 }
             )
         if parts:
@@ -161,8 +157,16 @@ class Encounter(BaseAdapter):
                 "system": "http://unitsofmeasure.org",
             }
 
+    # @classmethod
+    # def build_fhir_reason_code(cls, enc):
+        # return [
+                # cls.build_codeable_concept(
+                    # code=enc.diagnosis.name,
+                    # text=enc.diagnosis.name
+                # )]
+
     @classmethod
-    def build_fhir_reason_and_diagnosis(cls, enc):
+    def build_fhir_diagnosis(cls, enc):
         # Diagnosis/Reason
         # TODO better information, add note to Condition reference
         # diagnosis, related_condition, secondary_conditions
@@ -171,13 +175,15 @@ class Encounter(BaseAdapter):
             diags.append({"rank": 1, "condition": {"display": enc.diagnosis.name}})
         if enc.related_condition:
             # This is set for a followup appt - consequently add this to reason, too
-            cond = {
-                "display": enc.related_condition.pathology.name,
-                "reference": "".join(["Condition/", str(enc.related_condition.id)]),
-            }
-            diags.append({"rank": 2, "condition": cond})
-            jsondict["reason"] = [{"text": cond["display"]}]
+            diags.append(
+                {
+                    "rank": 2,
+                    "condition": cls.build_fhir_reference_from_adapter_and_object(
+                        Condition, enc.related_condition
+                    ),
+                }
+            )
             temp = True
         for x, y in enumerate(enc.secondary_conditions, start=3 if temp else 2):
             diags.append({"rank": x, "condition": {"display": y.pathology.name}})
-        return [{"text": cond["display"]}], diags
+        return diags

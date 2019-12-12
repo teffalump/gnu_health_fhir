@@ -2,6 +2,7 @@ from .utils import safe_attrgetter
 from pendulum import instance
 from fhirclient.models.medicationstatement import MedicationStatement as fhir_med
 from .base import BaseAdapter
+from .patient_adapter import Patient
 
 __all__ = ["MedicationStatement"]
 
@@ -45,11 +46,7 @@ class MedicationStatement(BaseAdapter):
 
     @classmethod
     def build_fhir_subject(cls, med):
-        subject = med.name
-        return {
-            "display": subject.name.rec_name,
-            "reference": "/".join(["Patient", str(subject.id)]),
-        }
+        return cls.build_fhir_reference_from_adapter_and_object(Patient, med.name)
 
     @classmethod
     def build_fhir_date_asserted(cls, med):
@@ -165,12 +162,11 @@ class MedicationStatement(BaseAdapter):
     @classmethod
     def build_fhir_reason_code(cls, med):
         # TODO Ideally should make indication connect to patient condition
-        if reason:
-            cls.build_codeable_concept(
-                med.indication.code,
-                "urn:oid:2.16.840.1.113883.6.90",  # ICD-10-CM
-                med.indication.name,
-            )
+        cls.build_codeable_concept(
+            med.indication.code,
+            "urn:oid:2.16.840.1.113883.6.90",  # ICD-10-CM
+            med.indication.name,
+        )
 
     @classmethod
     def build_fhir_effective_period(cls, med):

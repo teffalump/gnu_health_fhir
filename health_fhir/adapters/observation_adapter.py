@@ -2,6 +2,8 @@ from .utils import safe_attrgetter
 from pendulum import instance
 from fhirclient.models.observation import Observation as fhir_observation
 from .base import BaseAdapter
+from .patient_adapter import Patient
+from .practitioner_adapter import Practitioner
 
 __all__ = ["Observation"]
 
@@ -76,7 +78,6 @@ class Observation(BaseAdapter):
 
     @classmethod
     def build_fhir_performer(cls, observation):
-        persons = []
         performers = [
             x
             for x in safe_attrgetter(
@@ -84,13 +85,10 @@ class Observation(BaseAdapter):
             )
             if x
         ]
-        for performer in performers:
-            r = {
-                "display": performer.name.rec_name,
-                "reference": "".join(["Practitioner/", str(performer.id)]),
-            }
-            persons.append(r)
-        return persons
+        return [
+            cls.build_fhir_reference_from_adapter_and_object(Practitioner, performer)
+            for performer in performers
+        ]
 
     @classmethod
     def build_fhir_reference_range(cls, observation):
@@ -138,10 +136,7 @@ class Observation(BaseAdapter):
     def build_fhir_subject(cls, observation):
         subject = safe_attrgetter(observation, "gnuhealth_lab_id.patient")
         if subject:
-            return {
-                "display": subject.name.rec_name,
-                "reference": "".join(["Patient/", str(subject.id)]),
-            }
+            cls.build_fhir_reference_from_adapter_and_object(Patient, subject)
 
     @classmethod
     def build_fhir_effective_datetime(cls, observation):

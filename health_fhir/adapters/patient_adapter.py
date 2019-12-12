@@ -2,6 +2,7 @@ from .utils import safe_attrgetter
 from pendulum import instance, parse
 from fhirclient.models.patient import Patient as fhir_patient
 from .base import BaseAdapter
+from .practitioner_adapter import Practitioner
 from ..converters import maritalStatus as ms
 from re import sub
 
@@ -153,25 +154,22 @@ class Patient(BaseAdapter):
     def build_fhir_general_practitioner(cls, patient):
         pcp = patient.primary_care_doctor
         if pcp:
-            r = {
-                "display": pcp.rec_name,
-                "reference": "".join(["Practitioner/", str(pcp.id)]),
-            }
-            return [r]
+            return [cls.build_fhir_reference_from_adapter_and_object(Practitioner, pcp)]
 
     @classmethod
     def build_fhir_communication(cls, patient):
         lang = patient.name.lang
         if lang:
-            cc = {}
-            c = {}
-
-            c["code"] = sub("_", "-", lang.code)  # Standard requires dashes
-            c["display"] = lang.name
-            c["system"] = "urn:ietf:bcp:47"
-            cc["coding"] = [c]
-            com = {"preferred": "true", "language": cc}
-            return [com]
+            return [
+                {
+                    "preferred": "true",
+                    "language": cls.build_codeable_concept(
+                        sub("_", "-", lang.code),  # Standard requires dashes
+                        "urn:ietf:bcp:47",
+                        lang.name,
+                    ),
+                }
+            ]
 
         # import base64
         # if patient.name.photo:

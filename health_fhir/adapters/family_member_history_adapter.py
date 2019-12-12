@@ -2,6 +2,7 @@ from fhirclient.models.familymemberhistory import FamilyMemberHistory as fhir_fm
 from pendulum import instance
 from .base import BaseAdapter
 from ..converters import familyMember
+from .patient_adapter import Patient
 
 __all__ = ["FamilyMemberHistory"]
 
@@ -69,22 +70,18 @@ class FamilyMemberHistory(BaseAdapter):
 
     @classmethod
     def build_fhir_patient(cls, member):
-        patient = member.patient
-        if patient:
-            return {
-                "display": patient.rec_name,
-                "reference": "".join(["Patient/", str(patient.id)]),
-            }
+        return cls.build_fhir_reference_from_adapter_and_object(Patient, member.patient)
 
     @classmethod
     def build_fhir_relationship(cls, member):
-        if member:
-            t = {"m": "maternal", "f": "paternal"}  # ignore sibling code
-            k = " ".join((t.get(member.xory, ""), member.relative)).strip()
-            info = [d for d in familyMember.contents if d["display"] == k]
+        t = {"m": "maternal", "f": "paternal"}  # ignore sibling code
+        k = " ".join((t.get(member.xory, ""), member.relative)).strip()
+        info = [d for d in familyMember.contents if d["display"] == k]
 
-            if info:
-                return cls.build_codeable_concept(info[0]["code"], info[0]["system"], k)
+        if info:
+            return cls.build_codeable_concept(info[0]["code"], info[0]["system"], k)
+        else:
+            return cls.build_codeable_concept(code=k, text=k)
 
     @classmethod
     def build_fhir_status(cls, member):
@@ -96,7 +93,7 @@ class FamilyMemberHistory(BaseAdapter):
         path = member.name
         if path:
             return [
-                cls.build_codeable_concept(
-                    path.code, "urn:oid:2.16.840.1.113883.6.90", path.name  # ICD-10-CM
-                )
+                    {"code": cls.build_codeable_concept(
+                                path.code, "urn:oid:2.16.840.1.113883.6.90", path.name  # ICD-10-CM
+                            )}
             ]

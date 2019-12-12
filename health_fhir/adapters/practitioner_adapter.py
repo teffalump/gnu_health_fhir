@@ -2,6 +2,7 @@ from operator import attrgetter
 from pendulum import instance
 from fhirclient.models.practitioner import Practitioner as fhir_practitioner
 from .base import BaseAdapter
+from re import sub
 
 __all__ = ["Practitioner"]
 
@@ -76,16 +77,11 @@ class Practitioner(BaseAdapter):
     def build_fhir_communication(cls, hp):
         lang = hp.name.lang
         if lang:
-            cc = {"text": lang.name}
-            from re import sub
-
-            c = {
-                "code": sub("_", "-", lang.code),
-                "display": lang.name,
-                "system": "urn:ietf:bcp:47",
-            }
-            cc["coding"] = [c]
-            return [cc]
+            return [
+                cls.build_codeable_concept(
+                    sub("_", "-", lang.code), "urn:ietf:bcp:47", lang.name
+                )
+            ]
 
         # TODO Handle the specialties and roles better
         #     Specifically, output better job titles -- e.g., radiology tech, etc.

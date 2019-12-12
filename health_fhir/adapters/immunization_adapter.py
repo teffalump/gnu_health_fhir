@@ -3,6 +3,8 @@ from pendulum import instance
 from .base import BaseAdapter
 from .utils import safe_attrgetter
 from ..converters import immunizationRoute, immunizationSite
+from .patient_adapter import Patient
+from .practitioner_adapter import Practitioner
 
 __all__ = ["Immunization"]
 
@@ -72,25 +74,19 @@ class Immunization(BaseAdapter):
 
     @classmethod
     def build_fhir_patient(cls, vaccination):
-        patient = vaccination.name
-        if patient:
-            return {
-                "display": patient.rec_name,
-                "reference": "".join(["Patient/", str(patient.id)]),
-            }
+        return cls.build_fhir_reference_from_adapter_and_object(
+            Patient, vaccination.name
+        )
 
     @classmethod
     def build_fhir_practitioner(cls, vaccination):
-        practitioner = vaccination.healthprof
-        if practitioner:
-            return [
-                {
-                    "actor": {
-                        "display": practitioner.rec_name,
-                        "reference": "".join(["Practitioner/", str(practitioner.id)]),
-                    }
-                }
-            ]
+        return [
+            {
+                "actor": cls.build_fhir_reference_from_adapter_and_object(
+                    Practitioner, vaccination.healthprof
+                )
+            }
+        ]
 
     @classmethod
     def build_fhir_lot_number(cls, vaccination):

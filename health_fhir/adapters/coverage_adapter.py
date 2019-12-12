@@ -57,6 +57,7 @@ class Coverage(BaseAdapter):
 
     @classmethod
     def build_fhir_beneficiary(cls, coverage):
+        # DEBUG Access patient from party
         return {
             "display": coverage.name.rec_name,
             # "reference": "".join(["Patient/", str(coverage.name.name.id)]),

@@ -23,6 +23,7 @@ Currently, the package at least partially supports reads of these FHIR resources
 - Procedure
 - Encounter
 - ClinicalImpression
+- Coverage
 
 Not every resource's element is currently supported. Some of the elements have no equivalent in GNU Health, do not apply, have not reached maturity, or are undesirable in other ways. The FHIR resources are still under active development which makes them a moving target. The goal is to support all the reasonable, appropriate elements.
 

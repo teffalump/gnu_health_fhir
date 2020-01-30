@@ -30,7 +30,7 @@ class FamilyMemberHistory(BaseAdapter):
 
     @classmethod
     def build_fhir_gender(cls, member):
-        # TODO Turn into helper / config
+        # TODO Consider as helper / config
         ### NOTE KEEP THIS UPDATED ###
         # Possible selections (currently)
         #

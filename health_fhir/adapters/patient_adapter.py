@@ -3,7 +3,7 @@ from pendulum import instance, parse
 from fhirclient.models.patient import Patient as fhir_patient
 from .base import BaseAdapter
 from .practitioner_adapter import Practitioner
-from ..converters import maritalStatus as ms
+from ..config import MaritalStatus as ms
 from re import sub
 
 __all__ = ["Patient"]
@@ -179,24 +179,4 @@ class Patient(BaseAdapter):
 
     @classmethod
     def build_fhir_marital_status(cls, patient):
-        # TODO Make helper function
-        # Health has concubinage and separated, which aren't truly
-        # matching FHIR defined statuses
-        if patient.name.marital_status:
-            us = patient.name.marital_status.upper()  # Codes are uppercase
-            fhir_status = [x for x in ms.contents if x["code"] == us]
-            marital_status = {}
-            if fhir_status:
-                code = fhir_status[0]["code"]
-                display = fhir_status[0]["display"]
-            else:
-                code = "OTH"
-                display = "other"
-            marital_status["coding"] = [
-                {
-                    "system": "http://hl7.org/fhir/v3/MaritalStatus",
-                    "code": code,
-                    "display": display,
-                }
-            ]
-            return marital_status
+        return ms.build_fhir_object_from_health(patient.name.marital_status)

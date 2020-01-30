@@ -1,7 +1,7 @@
 from fhirclient.models.familymemberhistory import FamilyMemberHistory as fhir_fmh
 from pendulum import instance
 from .base import BaseAdapter
-from ..converters import familyMember
+from ..config import familyMember
 from .patient_adapter import Patient
 
 __all__ = ["FamilyMemberHistory"]
@@ -93,7 +93,11 @@ class FamilyMemberHistory(BaseAdapter):
         path = member.name
         if path:
             return [
-                    {"code": cls.build_codeable_concept(
-                                path.code, "urn:oid:2.16.840.1.113883.6.90", path.name  # ICD-10-CM
-                            )}
+                {
+                    "code": cls.build_codeable_concept(
+                        path.code,
+                        "urn:oid:2.16.840.1.113883.6.90",
+                        path.name,  # ICD-10-CM
+                    )
+                }
             ]

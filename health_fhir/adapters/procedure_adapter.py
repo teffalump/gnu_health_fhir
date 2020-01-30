@@ -83,11 +83,13 @@ class Procedure(BaseAdapter):
 
     @classmethod
     def build_fhir_reason_code(cls, procedure):
-        return [cls.build_codeable_concept(
-            procedure.name.pathology.code,
-            "urn:oid:2.16.840.1.113883.6.90",  # ICD-10-CM
-            procedure.name.pathology.name,
-        )]
+        return [
+            cls.build_codeable_concept(
+                procedure.name.pathology.code,
+                "urn:oid:2.16.840.1.113883.6.90",  # ICD-10-CM
+                procedure.name.pathology.name,
+            )
+        ]
 
     @classmethod
     def build_fhir_performer(cls, procedure):

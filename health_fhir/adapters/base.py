@@ -1,9 +1,10 @@
 from pendulum import instance, parse
+from ..common import helper_mixin
 
 __all__ = ["BaseAdapter"]
 
 
-class BaseAdapter:
+class BaseAdapter(helper_mixin):
     """The base adapter class:
             - defines multiple functions to be implemented by child classes (CRUD)
             - conversion methods
@@ -66,21 +67,6 @@ class BaseAdapter:
         }
 
     ##### HELPER METHODS #####
-
-    @classmethod
-    def build_codeable_concept(cls, code, system=None, text=None):
-        codeable_concept = {}
-        if code:
-            coding = {}
-            if system:
-                coding["system"] = system
-            if text:
-                coding["display"] = text
-            coding["code"] = str(code)
-            codeable_concept = {"coding": [coding]}
-        if text:
-            codeable_concept["text"] = text
-        return codeable_concept
 
     @classmethod
     def build_fhir_name_for_person(cls, gh_person_object):

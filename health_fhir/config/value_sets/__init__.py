@@ -5,3 +5,4 @@ from .immunization_route import *
 from .immunization_site import *
 from .act_encounter_code import *
 from .encounter_status import *
+from .organization_type import *

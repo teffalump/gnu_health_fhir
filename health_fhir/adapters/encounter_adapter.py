@@ -159,11 +159,11 @@ class Encounter(BaseAdapter):
 
     # @classmethod
     # def build_fhir_reason_code(cls, enc):
-        # return [
-                # cls.build_codeable_concept(
-                    # code=enc.diagnosis.name,
-                    # text=enc.diagnosis.name
-                # )]
+    # return [
+    # cls.build_codeable_concept(
+    # code=enc.diagnosis.name,
+    # text=enc.diagnosis.name
+    # )]
 
     @classmethod
     def build_fhir_diagnosis(cls, enc):

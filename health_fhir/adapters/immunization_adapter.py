@@ -2,7 +2,7 @@ from fhirclient.models.immunization import Immunization as fhir_immunization
 from pendulum import instance
 from .base import BaseAdapter
 from .utils import safe_attrgetter
-from ..config import immunizationRoute, immunizationSite
+from ..config import ImmunizationRoute, ImmunizationSite
 from .patient_adapter import Patient
 from .practitioner_adapter import Practitioner
 
@@ -15,11 +15,11 @@ class Immunization(BaseAdapter):
         # TODO reaction - Must be reference in standard, but stored as text
         jsondict = {}
         jsondict["identifier"] = cls.build_fhir_identifier(vaccination)
-        jsondict["date"] = cls.build_fhir_date(vaccination)
-        jsondict["notGiven"] = cls.build_fhir_not_given(vaccination)
+        jsondict["dateTime"] = cls.build_fhir_date_time(vaccination)
+        # jsondict["statusReason"] = cls.build_fhir_status_reason(vaccination)
         jsondict["status"] = cls.build_fhir_status(vaccination)
         jsondict["patient"] = cls.build_fhir_patient(vaccination)
-        jsondict["practitioner"] = cls.build_fhir_practitioner(vaccination)
+        jsondict["performer"] = cls.build_fhir_performer(vaccination)
         jsondict["lotNumber"] = cls.build_fhir_lot_number(vaccination)
         jsondict["expirationDate"] = cls.build_fhir_expiration_date(vaccination)
         jsondict["doseQuantity"] = cls.build_fhir_dose_quantity(vaccination)
@@ -28,9 +28,7 @@ class Immunization(BaseAdapter):
         jsondict["site"] = cls.build_fhir_site(vaccination)
         jsondict["vaccineCode"] = cls.build_fhir_vaccine_code(vaccination)
         jsondict["primarySource"] = cls.build_fhir_primary_source(vaccination)
-        jsondict["vaccinationProtocol"] = cls.build_fhir_vaccination_protocol(
-            vaccination
-        )
+        jsondict["protocolApplied"] = cls.build_fhir_vaccination_protocol(vaccination)
         return fhir_immunization(jsondict=jsondict)
 
     @classmethod
@@ -51,18 +49,20 @@ class Immunization(BaseAdapter):
         ]
 
     @classmethod
-    def build_fhir_date(cls, vaccination):
+    def build_fhir_date_time(cls, vaccination):
         date = vaccination.date
         if date:
             return instance(date).to_iso8601_string()
 
     @classmethod
-    def build_fhir_not_given(cls, vaccination):
+    def build_fhir_status_reason(cls, vaccination):
         # TODO Is there a field for this in Health (?)
-        return False
+        # Only if not given
+        return cls.build_codeable_concept(code="not-done", text="Refused")
 
     @classmethod
     def build_fhir_status(cls, vaccination):
+        # not-done is not in Health
         status = vaccination.state
         if status == "in_progress":
             g = "in-progress"
@@ -79,7 +79,7 @@ class Immunization(BaseAdapter):
         )
 
     @classmethod
-    def build_fhir_practitioner(cls, vaccination):
+    def build_fhir_performer(cls, vaccination):
         return [
             {
                 "actor": cls.build_fhir_reference_from_adapter_and_object(
@@ -135,23 +135,14 @@ class Immunization(BaseAdapter):
     @classmethod
     def build_fhir_route(cls, vaccination):
         route = vaccination.admin_route
-
         if route:
-            ir = [i for i in immunizationRoute.contents if i["code"] == route.upper()]
-            if ir:
-                return cls.build_codeable_concept(
-                    code=ir[0]["code"], text=ir[0]["display"]
-                )
+            return ImmunizationRoute.build_fhir_object_from_health(route)
 
     @classmethod
     def build_fhir_site(cls, vaccination):
         site = vaccination.admin_site
         if site:
-            m = [i for i in immunizationSite.contents if i["code"] == site.upper()]
-            if m:
-                return cls.build_codeable_concept(
-                    code=m[0]["code"], text=m[0]["display"]
-                )
+            return ImmunizationSite.build_fhir_object_from_health(site)
 
     @classmethod
     def build_fhir_vaccine_code(cls, vaccination):
@@ -172,7 +163,7 @@ class Immunization(BaseAdapter):
 
             ref = {
                 "display": safe_attrgetter(authority, "name.rec_name"),
-                "reference": "".join(["Institution/", str(authority.id)]),
+                # "reference": "".join(["Institution/", str(authority.id)]),
             }
 
             target = {"text": disease}
@@ -182,7 +173,7 @@ class Immunization(BaseAdapter):
             # coding = Coding(code='count',
             # display='Counts')
             # status.coding = [coding]
-            vp["doseStatus"] = status
+            # vp["doseStatus"] = status
             vp["authority"] = ref
             vp["targetDisease"] = [target]
             return [vp]

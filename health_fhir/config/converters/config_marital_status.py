@@ -1,7 +1,7 @@
-from .base import base_config
+from .base import BaseConfig
 
 
-class MaritalStatus(base_config):
+class MaritalStatus(BaseConfig):
     @classmethod
     def build_fhir_object_from_health(cls, health):
         # Current FHIR values
@@ -41,7 +41,7 @@ class MaritalStatus(base_config):
             "W": "w",
             "UNK": None,
         }
-        return statuses.get(fhir.upper(), None)
+        return statuses.get(fhir, None)
 
     @classmethod
     def get_fhir_annulled(cls):

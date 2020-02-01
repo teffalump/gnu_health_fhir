@@ -25,7 +25,7 @@ setup(
     author="teffalump",
     author_email="chris@teffalump.com",
     packages=["health_fhir"],
-    install_requires=["fhirclient", "pendulum"],
+    install_requires=REQUIREMENTS,
     include_package_data=True,
     zip_safe=False,
     classifiers=[

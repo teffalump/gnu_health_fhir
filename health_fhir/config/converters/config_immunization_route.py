@@ -1,38 +1,40 @@
-from .base import base_config
+from .base import BaseConfig
 
-class ImmunizationRoute(base_config):
+__all__ = ["ImmunizationRoute"]
 
+
+class ImmunizationRoute(BaseConfig):
     @classmethod
     def build_fhir_object_from_health(cls, health):
         # Health routes
-        #('im', 'Intramuscular'),
-        #('sc', 'Subcutaneous'),
-        #('id', 'Intradermal'),
-        #('nas', 'Intranasal'),
-        #('po', 'Oral'),
-        if health == 'im':
+        # ('im', 'Intramuscular'),
+        # ('sc', 'Subcutaneous'),
+        # ('id', 'Intradermal'),
+        # ('nas', 'Intranasal'),
+        # ('po', 'Oral'),
+        if health == "im":
             return cls.get_fhir_intramuscular()
-        elif health == 'sc':
+        elif health == "sc":
             return cls.get_fhir_subcutaneous()
-        elif health == 'id':
+        elif health == "id":
             return cls.get_fhir_intradermal()
-        elif health == 'nas':
+        elif health == "nas":
             return cls.get_fhir_intranasal()
-        elif health == 'po':
+        elif health == "po":
             return cls.get_fhir_oral()
         else:
-            return None
+            return cls.get_fhir_unknown()
 
     @classmethod
     def build_health_object_from_fhir(cls, fhir):
         routes = {
-            'IM': 'im',
-            'PO': 'po',
-            'NASINHLC': 'nas',
-            'TRNSDERM': None,
-            'IDINJ': 'id',
-            'SQ': 'sc',
-            'IVINJ': None
+            "IM": "im",
+            "PO": "po",
+            "NASINHLC": "nas",
+            "TRNSDERM": None,
+            "IDINJ": "id",
+            "SQ": "sc",
+            "IVINJ": None,
         }
         return routes.get(fhir, None)
 
@@ -41,7 +43,7 @@ class ImmunizationRoute(base_config):
         return cls.build_codeable_concept(
             code="IM",
             system="http://terminology.hl7.org/CodeSystem/v3-RouteOfAdministration",
-            text="Intramuscular"
+            text="Intramuscular",
         )
 
     @classmethod
@@ -49,7 +51,7 @@ class ImmunizationRoute(base_config):
         return cls.build_codeable_concept(
             code="PO",
             system="http://terminology.hl7.org/CodeSystem/v3-RouteOfAdministration",
-            text="Oral"
+            text="Oral",
         )
 
     @classmethod
@@ -57,7 +59,7 @@ class ImmunizationRoute(base_config):
         return cls.build_codeable_concept(
             code="NASINHLC",
             system="http://terminology.hl7.org/CodeSystem/v3-RouteOfAdministration",
-            text="Intranasal"
+            text="Intranasal",
         )
 
     @classmethod
@@ -65,7 +67,7 @@ class ImmunizationRoute(base_config):
         return cls.build_codeable_concept(
             code="IVINJ",
             system="http://terminology.hl7.org/CodeSystem/v3-RouteOfAdministration",
-            text="Intravenous"
+            text="Intravenous",
         )
 
     @classmethod
@@ -73,7 +75,7 @@ class ImmunizationRoute(base_config):
         return cls.build_codeable_concept(
             code="SQ",
             system="http://terminology.hl7.org/CodeSystem/v3-RouteOfAdministration",
-            text="Subcutaneous"
+            text="Subcutaneous",
         )
 
     @classmethod
@@ -81,13 +83,21 @@ class ImmunizationRoute(base_config):
         return cls.build_codeable_concept(
             code="IDINJ",
             system="http://terminology.hl7.org/CodeSystem/v3-RouteOfAdministration",
-            text="Intradermal"
-            )
+            text="Intradermal",
+        )
 
     @classmethod
     def get_fhir_transdermal(cls):
         return cls.build_codeable_concept(
             code="TRNSDERM",
             system="http://terminology.hl7.org/CodeSystem/v3-RouteOfAdministration",
-            text="Transdermal"
+            text="Transdermal",
+        )
+
+    @classmethod
+    def get_fhir_unknown(cls):
+        return cls.build_codeable_concept(
+            code="UNK",
+            system="http://terminology.hl7.org/CodeSystem/v3-RouteOfAdministration",
+            text="Unkown",
         )

@@ -47,7 +47,7 @@ The easiest example is to use Proteus with this package:
     patient = Patient.to_fhir_object(first_patient)
 
     #Now you can use the data just like in fhirclient
-    print(patient.as_json()) #print as JSON
+    print(patient.as_json())
 
 #### Libraries used
 

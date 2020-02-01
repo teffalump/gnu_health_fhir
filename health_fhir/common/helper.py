@@ -16,3 +16,10 @@ class helper_mixin(object):
         if text:
             codeable_concept["text"] = text
         return codeable_concept
+
+    @classmethod
+    def get_code_from_codeable_concept(cls, concept):
+        try:
+            return concept["coding"][0]["code"]
+        except:
+            return None

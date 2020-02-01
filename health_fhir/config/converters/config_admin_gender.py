@@ -1,15 +1,15 @@
-from .base import base_config
+from .base import BaseConfig
 
-class AdministrativeGender(base_config):
 
+class AdministrativeGender(BaseConfig):
     @classmethod
     def build_fhir_object_from_health(cls, health):
         # biological_sex
         #   m --> male
         #   f --> female
-        if health == 'm':
+        if health == "m":
             return cls.get_fhir_male()
-        elif health == 'f':
+        elif health == "f":
             return cls.get_fhir_female()
         else:
             return cls.get_fhir_unknown()
@@ -17,8 +17,8 @@ class AdministrativeGender(base_config):
     @classmethod
     def build_health_object_from_fhir(cls, fhir):
         codes = {
-            "female": 'f',
-            "male": 'm',
+            "female": "f",
+            "male": "m",
         }
         return codes.get(fhir, None)
 
@@ -27,7 +27,7 @@ class AdministrativeGender(base_config):
         return cls.build_codeable_concept(
             code="female",
             system="http://hl7.org/fhir/administrative-gender",
-            text="Female"
+            text="Female",
         )
 
     @classmethod
@@ -43,7 +43,7 @@ class AdministrativeGender(base_config):
         return cls.build_codeable_concept(
             code="other",
             system="http://hl7.org/fhir/administrative-gender",
-            text="Other"
+            text="Other",
         )
 
     @classmethod
@@ -51,5 +51,5 @@ class AdministrativeGender(base_config):
         return cls.build_codeable_concept(
             code="unknown",
             system="http://hl7.org/fhir/administrative-gender",
-            text="Unknown"
+            text="Unknown",
         )

@@ -15,11 +15,12 @@ class Immunization(BaseAdapter):
         # TODO reaction - Must be reference in standard, but stored as text
         jsondict = {}
         jsondict["identifier"] = cls.build_fhir_identifier(vaccination)
-        jsondict["dateTime"] = cls.build_fhir_date_time(vaccination)
+        # jsondict["dateTime"] = cls.build_fhir_date_time(vaccination)
         # jsondict["statusReason"] = cls.build_fhir_status_reason(vaccination)
+        jsondict["notGiven"] = cls.build_fhir_not_given(vaccination)
         jsondict["status"] = cls.build_fhir_status(vaccination)
         jsondict["patient"] = cls.build_fhir_patient(vaccination)
-        jsondict["performer"] = cls.build_fhir_performer(vaccination)
+        # jsondict["performer"] = cls.build_fhir_performer(vaccination)
         jsondict["lotNumber"] = cls.build_fhir_lot_number(vaccination)
         jsondict["expirationDate"] = cls.build_fhir_expiration_date(vaccination)
         jsondict["doseQuantity"] = cls.build_fhir_dose_quantity(vaccination)
@@ -28,7 +29,7 @@ class Immunization(BaseAdapter):
         jsondict["site"] = cls.build_fhir_site(vaccination)
         jsondict["vaccineCode"] = cls.build_fhir_vaccine_code(vaccination)
         jsondict["primarySource"] = cls.build_fhir_primary_source(vaccination)
-        jsondict["protocolApplied"] = cls.build_fhir_vaccination_protocol(vaccination)
+        # jsondict["protocolApplied"] = cls.build_fhir_vaccination_protocol(vaccination)
         return fhir_immunization(jsondict=jsondict)
 
     @classmethod
@@ -143,6 +144,10 @@ class Immunization(BaseAdapter):
         site = vaccination.admin_site
         if site:
             return ImmunizationSite.build_fhir_object_from_health(site)
+
+    @classmethod
+    def build_fhir_not_given(cls, vaccination):
+        return False
 
     @classmethod
     def build_fhir_vaccine_code(cls, vaccination):

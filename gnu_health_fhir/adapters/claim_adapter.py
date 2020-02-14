@@ -24,4 +24,3 @@ class Claim(BaseAdapter):
     @classmethod
     def get_fhir_object_id_from_gh_object(cls, coverage):
         return claim.id
-

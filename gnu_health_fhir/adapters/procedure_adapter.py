@@ -73,7 +73,7 @@ class Procedure(BaseAdapter):
     def build_fhir_code(cls, procedure):
         return cls.build_codeable_concept(
             code=procedure.procedure.name,
-            system=COMMON.get_icd_10_pcs_system(),
+            system=COMMON_SYSTEMS.get_icd_10_pcs_system(),
             text=procedure.procedure.description.capitalize(),
         )
 

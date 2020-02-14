@@ -87,5 +87,7 @@ class Condition(BaseAdapter):
         code = condition.pathology
         if code:
             return cls.build_codeable_concept(
-                code=code.code, system=COMMON_SYSTEMS.get_icd_10_cm_system(), text=code.name
+                code=code.code,
+                system=COMMON_SYSTEMS.get_icd_10_cm_system(),
+                text=code.name,
             )

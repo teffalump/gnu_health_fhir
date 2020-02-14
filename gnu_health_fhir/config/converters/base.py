@@ -1,4 +1,4 @@
-from health_fhir.common import helper_mixin
+from gnu_health_fhir.common import helper_mixin
 
 
 class BaseConfig(helper_mixin):

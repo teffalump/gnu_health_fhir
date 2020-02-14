@@ -1,5 +1,5 @@
-from health_fhir.common.utils import safe_attrgetter
-from health_fhir.config import COMMON_SYSTEMS
+from gnu_health_fhir.common.utils import safe_attrgetter
+from gnu_health_fhir.config import COMMON_SYSTEMS
 from pendulum import instance
 from fhirclient.models.procedure import Procedure as fhir_procedure
 from .base import BaseAdapter

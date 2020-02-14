@@ -1,4 +1,4 @@
-from health_fhir.adapters import (
+from gnu_health_fhir.adapters import (
     Patient,
     Condition,
     Procedure,

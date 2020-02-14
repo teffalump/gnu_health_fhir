@@ -1,4 +1,4 @@
-from health_fhir.common.utils import safe_attrgetter
+from gnu_health_fhir.common.utils import safe_attrgetter
 from pendulum import instance
 from fhirclient.models.patient import Patient as fhir_patient
 from .base import BaseAdapter

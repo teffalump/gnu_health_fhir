@@ -2,7 +2,7 @@ import sys
 import os
 from setuptools import setup, Command
 
-NAME = "health_fhir"
+NAME = "gnu_health_fhir"
 
 with open("README.md") as readme:
     README = readme.read()
@@ -15,15 +15,15 @@ with open("requirements.txt") as requirements:
     REQUIREMENTS = [line.rstrip() for line in requirements if line != "\n"]
 
 setup(
-    name="health_fhir",
+    name="gnu_health_fhir",
     version=VERSION,
     description="Provides FHIR interface to GNU Health.",
     long_description=README,
     long_description_content_type=README_TYPE,
-    url="https://github.com/teffalump/health_fhir",
+    url="https://github.com/teffalump/gnu_health_fhir",
     author="teffalump",
     author_email="chris@teffalump.com",
-    packages=["health_fhir"],
+    packages=["gnu_health_fhir"],
     install_requires=REQUIREMENTS,
     include_package_data=True,
     zip_safe=False,

@@ -1,4 +1,4 @@
-# HEALTH_FHIR
+# gnu_health_fhir
 
 This package aims to provide a functional FHIR interface to GNU Health data models. With the provided classes, one should be able to work to and from the back-end data from GNU Health in a FHIR-compatible way. The module, ultimately, should provide a full interface - CRUD, type conversions, serializers, and so on.
 
@@ -32,7 +32,7 @@ Not every resource's element is currently supported. Some of the elements have n
 The easiest example is to use Proteus with this package:
 
     from proteus import config, Model
-    from health_fhir import Patient
+    from gnu_health_fhir import Patient
 
     #Connect to the GNU Health demo server
     config = config.set_xmlrpc('http://admin:gnusolidario@health.gnusolidario.org:8000/health36/')

@@ -1,5 +1,5 @@
 from pendulum import instance, parse
-from health_fhir.config import COMMON_SYSTEMS, SNOMED
+from gnu_health_fhir.config import COMMON_SYSTEMS, SNOMED
 from fhirclient.models.condition import Condition as fhir_condition
 from .base import BaseAdapter
 from .patient_adapter import Patient

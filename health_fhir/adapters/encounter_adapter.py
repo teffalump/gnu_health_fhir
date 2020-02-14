@@ -1,4 +1,3 @@
-from .utils import safe_attrgetter
 from pendulum import instance
 from fhirclient.models.encounter import Encounter as fhir_encounter
 from .base import BaseAdapter

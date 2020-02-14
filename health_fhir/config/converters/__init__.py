@@ -1,4 +1,4 @@
-from .common_systems import *
+from .helper_configs import *
 from .config_marital_status import MaritalStatus
 from .config_immunization_route import ImmunizationRoute
 from .config_immunization_site import ImmunizationSite

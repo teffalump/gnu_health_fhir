@@ -1,4 +1,5 @@
-from .utils import safe_attrgetter
+from health_fhir.common.utils import safe_attrgetter
+from health_fhir.config import COMMON_SYSTEMS
 from pendulum import instance
 from fhirclient.models.procedure import Procedure as fhir_procedure
 from .base import BaseAdapter
@@ -71,10 +72,10 @@ class Procedure(BaseAdapter):
     @classmethod
     def build_fhir_code(cls, procedure):
         return cls.build_codeable_concept(
-            procedure.procedure.name,
-            "urn:oid:2.16.840.1.113883.6.4",
-            procedure.procedure.description.capitalize(),
-        )  # ICD-10-PCS
+            code=procedure.procedure.name,
+            system=COMMON.get_icd_10_pcs_system(),
+            text=procedure.procedure.description.capitalize(),
+        )
 
     @classmethod
     def build_fhir_not_done(cls, procedure):
@@ -85,9 +86,9 @@ class Procedure(BaseAdapter):
     def build_fhir_reason_code(cls, procedure):
         return [
             cls.build_codeable_concept(
-                procedure.name.pathology.code,
-                "urn:oid:2.16.840.1.113883.6.90",  # ICD-10-CM
-                procedure.name.pathology.name,
+                code=procedure.name.pathology.code,
+                system=COMMON_SYSTEMS.get_icd_10_cm_system(),
+                text=procedure.name.pathology.name,
             )
         ]
 

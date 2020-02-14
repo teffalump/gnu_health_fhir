@@ -1,6 +1,5 @@
 import sys
 import os
-from shutil import rmtree
 from setuptools import setup, Command
 
 NAME = "health_fhir"

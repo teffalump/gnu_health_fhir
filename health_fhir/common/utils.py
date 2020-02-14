@@ -1,9 +1,7 @@
 from operator import attrgetter
 
-# def safe_attrgetter(obj, *attrs, default=None): #py3 declaration
-def safe_attrgetter(obj, *attrs, **kwargs):  # py2 declaration
+def safe_attrgetter(obj, *attrs, default=None): #py3 declaration
     """The fail-safe version of attrgetter"""
-    default = kwargs.get("default", None)  # py2 compatibility
     v = []
     for attr in attrs:
         try:

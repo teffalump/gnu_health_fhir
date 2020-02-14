@@ -1,4 +1,5 @@
 from pendulum import instance, parse
+from health_fhir.config import COMMON_SYSTEMS, SNOMED
 from fhirclient.models.condition import Condition as fhir_condition
 from .base import BaseAdapter
 from .patient_adapter import Patient
@@ -71,23 +72,20 @@ class Condition(BaseAdapter):
 
     @classmethod
     def build_fhir_severity(cls, condition):
-        # TODO Make config / helper
         severity = condition.disease_severity
-        if severity:
-            # These are the snomed codes
-            sev = {
-                "1_mi": ("Mild", "255604002"),
-                "2_mo": ("Moderate", "6736007"),
-                "3_sv": ("Severe", "24484000"),
-            }
-            t = sev.get(severity)
-            if t:
-                return cls.build_codeable_concept(t[1], "http://snomed.info/sct", t[0])
+        if severity == "1_mi":
+            return SNOMED.get_mild()
+        elif severity == "2_mo":
+            return SNOMED.get_moderate()
+        elif severity == "3_sv":
+            return SNOMED.get_severe()
+        else:
+            return None
 
     @classmethod
     def build_fhir_code(cls, condition):
         code = condition.pathology
         if code:
             return cls.build_codeable_concept(
-                code.code, "urn:oid:2.16.840.1.113883.6.90", code.name  # ICD-10-CM
+                code=code.code, system=COMMON_SYSTEMS.get_icd_10_cm_system(), text=code.name
             )

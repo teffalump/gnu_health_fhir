@@ -1,4 +1,3 @@
-from .utils import safe_attrgetter
 from pendulum import instance
 from fhirclient.models.diagnosticreport import DiagnosticReport as fhir_report
 from .base import BaseAdapter

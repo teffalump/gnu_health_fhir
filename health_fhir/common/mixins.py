@@ -3,14 +3,14 @@ __all__ = ["helper_mixin"]
 
 class helper_mixin(object):
     @classmethod
-    def build_codeable_concept(cls, code, system=None, text=None):
+    def build_codeable_concept(cls, code, system=None, text=None, display=None):
         codeable_concept = {}
         if code:
             coding = {}
             if system:
                 coding["system"] = system
-            if text:
-                coding["display"] = text
+            if text or display:
+                coding["display"] = display or text
             coding["code"] = str(code)
             codeable_concept = {"coding": [coding]}
         if text:
